@@ -45,8 +45,8 @@ def is_binary(datastring):
 
 def safestr(name):
 	name = name.replace(":",";") # to preserve emoticons
-	name = html_parser.unescape(name)
 	name = "".join(i for i in name if ord(i)<128)
+	name = html_parser.unescape(name)
 	return re.sub(r"[\/\\\*\?\"\<\>\|]", "", name).strip()
 	
 def is_str(obj):
@@ -116,7 +116,7 @@ class ImgThread(threading.Thread):
 				basename = indexstr
 		
 		if not re.match(r".+\.[a-zA-Z0-9]+", basename):
-			# preserve extension (or assume jpg)
+			# preserve extension (falling back on jpg)
 			ext = ".jpg"
 			tokens = info.path.split("?")[0].split(".")
 			if len(tokens) > 1:
@@ -125,7 +125,7 @@ class ImgThread(threading.Thread):
 				
 		fileName = os.path.join(info.dest, basename)
 		(basename,ext) = fileName.rsplit(".",1)
-		fileNameIndexed = "%s_001.%s" % (basename,ext)
+		fileNameIndexed = "%s_000.%s" % (basename,ext)
 		
 		if info.dest and not os.path.exists(info.dest):
 			os.makedirs(info.dest)
@@ -142,14 +142,23 @@ class ImgThread(threading.Thread):
 					print "Skipping " + existingFile + " (couldn't compare file size)"
 					return True
 				
+				# retroactively index previous image
+				renamed = ""
+				if not os.path.exists(fileNameIndexed):
+					renamed = fileName
+					os.rename(fileName, fileNameIndexed)
+					existingFile = fileNameIndexed
+				fileName = "%s_%s.%s" % (basename,indexstr,ext)
+				if os.path.exists(fileName):
+					existingFile = fileName
 				destsize = os.stat(existingFile).st_size
 				if srcsize == destsize:
-					print "Skipping " + existingFile
+					if renamed:
+						os.rename(fileNameIndexed, renamed)
+						print "Skipping " + renamed
+					else:
+						print "Skipping " + fileName
 					return True
-			
-				if not os.path.exists(fileNameIndexed):
-					os.rename(fileName, fileNameIndexed)
-				fileName = "%s_%s.%s" % (basename,indexstr,ext)
 		
 		if info.attempts == 1:
 			print "%s -> %s" % (info.path, fileName)
@@ -262,10 +271,14 @@ def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
 			QUEUE.put(JobInfo(redirect=link, dest=root, subtitle=subtitle))
 	else:
 		links = run_match(PLUGIN.direct, page)
-		for link in links:
-			(link,subtitle) = safe_unpack(link, subtitle)
-			link = safeurl(myurl, link)
-			QUEUE.put(JobInfo(path=link, dest=root, subtitle=subtitle))
+		if len(links) == 1:
+			# don't create folder for only one file
+			QUEUE.put(JobInfo(path=links[0], dest=os.path.dirname(root), subtitle=os.path.basename(root)))
+		else:
+			for link in links:
+				(link,subtitle) = safe_unpack(link, subtitle)
+				link = safeurl(myurl, link)
+				QUEUE.put(JobInfo(path=link, dest=root, subtitle=subtitle))
 	if not links:
 		if folder:
 			print "No links found at %s  Check regex." % myurl
