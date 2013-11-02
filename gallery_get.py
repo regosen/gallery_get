@@ -37,6 +37,7 @@ MAX_ATTEMPTS = 10
 
 PLUGIN = gallery_plugins.PLUGINS["plugin_generic"]
 DESTPATH_FILE = "last_gallery_dest.txt"
+DEST_ROOT = os.getcwd()
 
 TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
 def is_binary(datastring):
@@ -202,7 +203,7 @@ class ImgThread(threading.Thread):
 		if INDEX > 0:
 			QUEUE.task_done()
 
-def run(myurl,folder="",usetitleasfolder=True):
+def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
 	global JOBS_PENDING, PLUGIN, INDEX
 	if not myurl:
 		print "Nothing to do!"
@@ -274,25 +275,41 @@ def run(myurl,folder="",usetitleasfolder=True):
 	JOBS_PENDING = False
 	t.join()
 
+
+def run_prompted():
+	global DEST_ROOT
+	myurl = raw_input("input url:").strip()
+	new_dest = raw_input("output path (%s):" % DEST_ROOT).strip()
+	if new_dest:
+		open(DESTPATH_FILE,"w").write(new_dest)
+		DEST_ROOT = new_dest
+	run_internal(myurl, DEST_ROOT, False)
+
+
+def run(myurl="", dest=""):
+	if not myurl:
+		run_prompted()
+	else:
+		if dest:
+			open(DESTPATH_FILE,"w").write(dest)
+		elif os.path.exists(DESTPATH_FILE):
+			dest = open(DESTPATH_FILE,"r").read().strip()
+		run_internal(myurl, dest, False)
+
+
 cur_file = os.path.basename(str(__file__))
 arg_file = sys.argv[0]
-dest_root = os.getcwd()
 if os.path.exists(DESTPATH_FILE):
-	dest_root = open(DESTPATH_FILE,"r").read().strip()
+	DEST_ROOT = open(DESTPATH_FILE,"r").read().strip()
 	
 if arg_file and os.path.basename(arg_file) == cur_file:
 	### DIRECT LAUNCH (not import)
 	if len(sys.argv) > 1:
 		# use first parameter as url, second (if exists) as dest
 		if len(sys.argv) > 2:
-			dest_root = sys.argv[2]
-			open(DESTPATH_FILE,"w").write(dest_root)
-		run(sys.argv[1], dest_root, False)
+			DEST_ROOT = sys.argv[2]
+			open(DESTPATH_FILE,"w").write(DEST_ROOT)
+		run_internal(sys.argv[1], DEST_ROOT, False)
 	else:
-		myurl = raw_input("input url:").strip()
-		new_dest = raw_input("output path (%s):" % dest_root).strip()
-		if new_dest:
-			open(DESTPATH_FILE,"w").write(new_dest)
-			dest_root = new_dest
-		run(myurl, dest_root, False)
+		run_prompted()
 
