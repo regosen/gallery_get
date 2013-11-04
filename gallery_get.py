@@ -162,7 +162,7 @@ class ImgThread(threading.Thread):
 				srcsize = int(file.headers.get("content-length"))
 				file.close()
 			except:
-				print "Skipping " + existingFile + " (couldn't compare file size)"
+				print "Skipping " + fileName + " (couldn't compare file size)"
 				return True
 			
 			destsize = os.stat(fileName).st_size
