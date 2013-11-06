@@ -18,14 +18,14 @@ title = r'data-title="(.*?)"'
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
 def direct_links(source):
-	start = source.find("images      :", source.find("Imgur.Album"))+14
-	end = source.find("]}", start) + 2
-	albumimages = []
-	rawAlbumdata = source[start:end]
-	if rawAlbumdata.strip():
-		albumdata = eval(rawAlbumdata)
-		for i in albumdata["items"]:
-			albumimages.append( "http://i.imgur.com/"+i["hash"]+i["ext"] )
-	return albumimages
+    start = source.find("images      :", source.find("Imgur.Album"))+14
+    end = source.find("]}", start) + 2
+    albumimages = []
+    rawAlbumdata = source[start:end]
+    if rawAlbumdata.strip():
+        albumdata = eval(rawAlbumdata)
+        for i in albumdata["items"]:
+            albumimages.append( "http://i.imgur.com/"+i["hash"]+i["ext"] )
+    return albumimages
 
 # same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle). 

@@ -15,16 +15,16 @@ DEFAULT_PLUGIN = None
 FALLBACK_TITLE = "Untitled Gallery"
 
 class Plugin(object):
-	def __init__(self, identifier):
-		self.identifier = identifier
-		self.redirect = DEFAULT_REDIRECT
-		self.direct = DEFAULT_DIRECT_LINKS
-		self.title = DEFAULT_TITLE
-		self.useFilename = DEFAULT_USE_FILENAME
+    def __init__(self, identifier):
+        self.identifier = identifier
+        self.redirect = DEFAULT_REDIRECT
+        self.direct = DEFAULT_DIRECT_LINKS
+        self.title = DEFAULT_TITLE
+        self.useFilename = DEFAULT_USE_FILENAME
 
 def register_plugin(modname, identifier):
-	if not modname in PLUGINS:
-		PLUGINS[modname] = Plugin(identifier)
+    if not modname in PLUGINS:
+        PLUGINS[modname] = Plugin(identifier)
 
 def register_title(modname, title):
     PLUGINS[modname].title = title
