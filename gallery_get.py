@@ -138,12 +138,11 @@ class ImgThread(threading.Thread):
         basename = info.subtitle
         if PLUGIN.useFilename:
             basename = os.path.basename(info.path).split("?")[0]
-        else:
-            if not basename or basename == gallery_plugins.FALLBACK_TITLE:
-                basename = indexstr
-            else:
-                (basename,ext) = os.path.splitext(basename)
-                basename = "%s_%s%s" % (basename, indexstr, ext)
+        elif not basename or basename == gallery_plugins.FALLBACK_TITLE:
+            basename = indexstr
+        elif info.index > 0:
+            (basename,ext) = os.path.splitext(basename)
+            basename = "%s_%s%s" % (basename, indexstr, ext)
         
         # copy extension (falling back on jpg)
         if not re.match(r".+\.[a-zA-Z0-9]+\Z", basename):
@@ -298,7 +297,7 @@ def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
                 os.makedirs(root)
             add_job(path=links[0], dest=root, subtitle=filename)
         else:
-            idx = 0
+            idx = 1
             if not os.path.exists(root):
                 os.makedirs(root)
             for link in links:

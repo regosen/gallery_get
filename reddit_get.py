@@ -27,7 +27,7 @@ def download_image(url, fileNameFull):
     if not os.path.exists(folder):
         os.makedirs(folder)
     elif os.path.exists(fileName):
-        print "Skipping existing file: " + fileName
+        print "Skipping " + fileName
         return
     gallery_get.add_job(path=url, dest=folder, subtitle=fileName)
 
