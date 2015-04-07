@@ -58,10 +58,6 @@ def run_internal(user, dest):
         num_valid_posts = 0
         for post in reddit_json['data']['children']:
             url = post['data']['url']
-            if not "imgur.com/" in url:
-                # only supporting imgur for now
-                continue
-            num_valid_posts += 1
                 
             if url.lower() in visited_links:
                 print "Skipping already visited link: " + url
@@ -93,6 +89,15 @@ def run_internal(user, dest):
                 if real_ext != "jpeg": # jpeg -> jpg
                     ext = real_ext
                 download_image("%s.%s" % (img_base, ext), folder)
+            elif "vidble.com/album" in url:
+                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
+                    return False
+            elif url.endswith(".jpg") or url.endswith(".jpeg") or url.endswith(".gif"):
+                download_image(url, folder)
+            else:
+                continue
+            num_valid_posts += 1
+
         gallery_get.flush_jobs()
         if num_valid_posts == 0:
             print "\nApparently this user hasn't submitted any imgur links.  Nothing to do."
