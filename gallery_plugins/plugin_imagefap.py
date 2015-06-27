@@ -13,11 +13,24 @@ import re,urllib
 title = r'<title>(.+?)</title>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
+def redirect(source):
+    redirects = []
+    cur_url = re.findall(r'href=\'(.+?)\'\>', source)[0].split("?")[0]
+    index = 0
+    while True:
+        indexed_page = cur_url + "?page=%d" % index
+        print "Crawling " + indexed_page
+        indexed_source = urllib.urlopen(indexed_page).read()
+        links = re.findall('href=[\"\'](/photo/.+)[\"\']',indexed_source)
+        if links:
+            redirects += map(lambda x: 'http://www.imagefap.com' + x, links)
+            index += 1
+        else:
+            break
+    return redirects
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
-def direct_links(source):
-    links = re.findall('href=[\"\'](/photo/.+)[\"\']',source)
-    subpage = urllib.urlopen("http://www.imagefap.com" + links[0]).read()
-    return re.findall('(http://x.imagefapusercontent.com/.+?\.jpg)',subpage)
+direct_links = r'name="mainPhoto".+?(http://x.imagefapusercontent.com/.+?\.jpg)'
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
+same_filename = True
