@@ -20,7 +20,7 @@ title = r'<title>"(.*?)</title>"'
 #   if the matches need to be reversed, use named groups "link" and "basename"
 
 def direct_links(source):
-    links = re.findall('img src=[\"\'](.+?\.jpg)[\"\']',source)
+    links = re.findall('img src=[\"\'](.+?\.jpe?g)[\"\']',source)
     links = filter(lambda x: "/assets/" not in x, links)
     return map(lambda x: 'http://vidble.com' + x, links)
 

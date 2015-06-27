@@ -12,7 +12,7 @@
 title = r'Reload this Page">(.+?)</a>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
-redirect = r'(http://img\d\d\d\.imagevenue\.com/img\.php.+?\.jpg)'
+redirect = r'(http://img\d\d\d\.imagevenue\.com/img\.php.+?\.jpe?g)'
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 
