@@ -61,7 +61,12 @@ def is_str(obj):
     return isinstance(obj, basestring)
 
 def safe_unpack(obj, default):
-    return (obj,safestr(default)) if is_str(obj) else (obj[0],safestr(obj[1]))
+    if is_str(obj):
+        return (obj,safestr(default))
+    elif obj:
+        return (obj[0],safestr(obj[1]))
+    else:
+        return ("","")
     
 def run_match(match, source, singleItem=False):
     result = []
@@ -82,9 +87,10 @@ def run_match(match, source, singleItem=False):
         else:
             result = match(source)
     if singleItem:
-        return result if is_str(result) else result[0] if result else ""
-    else:
-        return [result] if is_str(result) else list(set(result))
+        result = result if is_str(result) else result[0] if result else ""
+    elif result:
+        result = [result] if is_str(result) else list(set(result))
+    return result if result else []
 
 def safeurl(parent, link):
     if not link.lower().startswith("http"):
