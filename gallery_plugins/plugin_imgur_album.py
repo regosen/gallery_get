@@ -21,7 +21,7 @@ def direct_links(source):
     start = source.find("images      :", source.find("Imgur.Album"))+14
     end = source.find("]}", start) + 2
     albumimages = []
-    rawAlbumdata = source[start:end].replace(":false,",":False,").replace(":true,",":True,")
+    rawAlbumdata = source[start:end].replace(":false,",":False,").replace(":true,",":True,").replace("null",'""')
     if rawAlbumdata.strip():
         albumdata = eval(rawAlbumdata)
         for i in albumdata["items"]:

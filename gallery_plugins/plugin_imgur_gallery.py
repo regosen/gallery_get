@@ -16,7 +16,7 @@ title =  r'title" value="/?(.+?)"'
 #redirect = r'href="(.+?)">\W*<img'
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
-direct_links = r'rel="image_src" href="(http://i.imgur.com/.+?)"'
+direct_links = r'property="og:image"\W+content="(http://i.imgur.com/.+?)"'
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
 
