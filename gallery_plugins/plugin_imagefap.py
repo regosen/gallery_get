@@ -18,6 +18,6 @@ title = r'<title>(.+?)</title>'
 def direct_links(source):
     links = re.findall('href=[\"\'](/photo/.+)[\"\']',source)
     subpage = urllib.urlopen("http://www.imagefap.com" + links[0]).read()
-    return re.findall('(http://fap.to/images/full/.+?\.jpg)',subpage)
+    return re.findall('(http://x.imagefapusercontent.com/.+?\.jpg)',subpage)
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
