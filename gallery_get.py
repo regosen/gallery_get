@@ -288,12 +288,14 @@ def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
     # TODO: DRY
     if PLUGIN.redirect:
         links = run_match(PLUGIN.redirect, page)
+        idx = 1
         for link in links:
             (link,subtitle) = safe_unpack(link, subtitle)
             link = safeurl(myurl, link)
             if not os.path.exists(root):
                 os.makedirs(root)
-            add_job(redirect=link, dest=root, subtitle=subtitle)
+            add_job(redirect=link, dest=root, subtitle=subtitle, index=idx)
+            idx += 1
     else:
         links = run_match(PLUGIN.direct, page)
         if len(links) == 1:
