@@ -1,2 +1,8 @@
 *.pyc
+build/
+dist/
 last_gallery_dest.txt
+MANIFEST*
+README
+README.rst
+setup.py
