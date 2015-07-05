@@ -200,7 +200,12 @@ class ImgThread(threading.Thread):
                 continue
             
             if info.redirect:
-                rpage = urllib.urlopen(info.redirect).read()
+                try:
+                    rpage = urllib.urlopen(info.redirect).read()
+                except:
+                    print "WARNING: Failed to open redirect " + info.redirect
+                    continue
+
                 jpegs = run_match(PLUGIN.direct,rpage)
                 if not jpegs:
                     if is_binary(rpage[:1024]):
