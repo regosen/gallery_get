@@ -23,6 +23,7 @@ import threading
 import gallery_plugins
 import HTMLParser
 import multiprocessing
+import calendar
 from urlparse import urlparse
 html_parser = HTMLParser.HTMLParser()
 
@@ -157,15 +158,16 @@ class ImgThread(threading.Thread):
             if len(tokens) > 1:
                 ext = "." + tokens[-1]
             basename += ext
-                
+
+        fileInfo = urllib.urlopen(info.path)
+        modtime = fileInfo.info().getdate('last-modified')
+
         fileName = os.path.join(info.dest, basename)
         if os.path.exists(fileName):
             # file already exists.  Skip if same size
             srcsize = 0
             try:
-                file = urllib.urlopen(info.path)
-                srcsize = int(file.headers.get("content-length"))
-                file.close()
+                srcsize = int(fileInfo.headers.get("content-length"))
             except:
                 print "Skipping " + fileName + " (couldn't compare file size)"
                 return True
@@ -181,13 +183,19 @@ class ImgThread(threading.Thread):
             print "%s -> %s (Attempt %d)" % (info.path, fileName, info.attempts)
         try:
             if not info.data:
-                info.data = urllib.urlopen(info.path).read()
+                info.data = fileInfo.read()
+
         except:
             # don't bother printing anything, will display next attempt
             return False
+
+        fileInfo.close()
         output = open(fileName,'wb')
         output.write(info.data)
         output.close()
+        if modtime is not None:
+            lastmod = calendar.timegm(modtime)
+            os.utime(fileName, (lastmod, lastmod))
         return os.path.getsize(fileName) > 4096
     
     def run_internal(self):
