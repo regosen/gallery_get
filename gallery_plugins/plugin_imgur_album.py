@@ -24,7 +24,7 @@ def direct_links(source):
     rawAlbumdata = source[start:end].replace(":false,",":False,").replace(":true,",":True,").replace("null",'""')
     if rawAlbumdata.strip():
         albumdata = eval(rawAlbumdata)
-        for i in albumdata["items"]:
+        for i in albumdata["images"]:
             albumimages.append( "http://i.imgur.com/"+i["hash"]+i["ext"] )
     return albumimages
 
