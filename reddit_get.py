@@ -13,9 +13,17 @@
 
 import gallery_get
 import os, time, sys, traceback
-import urllib, datetime, json
+import datetime, json
+try:
+    import urllib.request as urllib
+except:
+    import urllib # Python 2
 DEST_ROOT = gallery_get.DEST_ROOT
 gallery_get.PLUGIN = gallery_get.gallery_plugins.PLUGINS["plugin_imgur_album"]
+try:
+    str_input = raw_input # Python 2
+except:
+    str_input = input
 
 def reddit_url(user):
     return "http://www.reddit.com/user/%s/submitted/.json?limit=1000" % user
@@ -27,7 +35,7 @@ def download_image(url, fileNameFull):
     if not os.path.exists(folder):
         os.makedirs(folder)
     elif os.path.exists(fileName):
-        print "Skipping " + fileName
+        print("Skipping " + fileName)
         return
     gallery_get.add_job(path=url, dest=folder, subtitle=fileName)
 
@@ -36,13 +44,13 @@ def run_internal(user, dest):
     reddit_json = {}
     localpath = user + ".json"
     if os.path.exists(localpath):
-        print "Getting JSON data from local file (%s)" % localpath
-        reddit_json_str = open(localpath,"r").read()
+        print("Getting JSON data from local file (%s)" % localpath)
+        reddit_json_str = open(localpath,"r").read().decode('utf-8')
         reddit_json = json.loads(reddit_json_str)
     else:
-        print "Requesting JSON data from reddit..."
+        print("Requesting JSON data from reddit...")
         for i in range(5):
-            reddit_json_str = urllib.urlopen(reddit_url(user)).read()
+            reddit_json_str = urllib.urlopen(reddit_url(user)).read().decode('utf-8')
             reddit_json = json.loads(reddit_json_str)
             if "data" in reddit_json:
                 break
@@ -50,9 +58,9 @@ def run_internal(user, dest):
                 time.sleep(2)
 
     if not "data" in reddit_json:
-        print "ERROR getting json data after several retries!  Does the user exist?"
-        print "If so, try saving the contents of the following to [USERNAME].json and try again."
-        print reddit_url(user)
+        print("ERROR getting json data after several retries!  Does the user exist?")
+        print("If so, try saving the contents of the following to [USERNAME].json and try again.")
+        print(reddit_url(user))
     else:
         visited_links = set()
         num_valid_posts = 0
@@ -60,7 +68,7 @@ def run_internal(user, dest):
             url = post['data']['url']
                 
             if url.lower() in visited_links:
-                print "Skipping already visited link: " + url
+                print("Skipping already visited link: " + url)
                 continue
             else:
                 visited_links.add(url.lower())
@@ -100,7 +108,7 @@ def run_internal(user, dest):
 
         gallery_get.flush_jobs()
         if num_valid_posts == 0:
-            print "\nApparently this user hasn't submitted any imgur links.  Nothing to do."
+            print("\nApparently this user hasn't submitted any imgur links.  Nothing to do.")
 
 def run_wrapped(user, dest=""):
     global DEST_ROOT
@@ -112,18 +120,18 @@ def run_wrapped(user, dest=""):
         DEST_ROOT = dest
         run_internal(user, dest)
     except:
-        print '\n' + '-'*60
+        print('\n' + '-'*60)
         traceback.print_exc(file=sys.stdout)
-        print "Using params: [%s, %s]" % (user, dest)
-        print '-'*60 + '\n'
-        print gallery_get.EXCEPTION_NOTICE
+        print("Using params: [%s, %s]" % (user, dest))
+        print('-'*60 + '\n')
+        print(gallery_get.EXCEPTION_NOTICE)
 
 def run_prompted():
-    user = raw_input("Input reddit user: ").strip()
+    user = str_input("Input reddit user: ").strip()
     if not user:
-        print "Nothing to do!"
+        print("Nothing to do!")
         sys.exit()
-    new_dest = raw_input("Destination (%s): " % DEST_ROOT).strip()
+    new_dest = str_input("Destination (%s): " % DEST_ROOT).strip()
     run_wrapped(user, new_dest)
 
 def run(user="", dest=""):

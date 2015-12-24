@@ -16,29 +16,51 @@
 
 
 import os,time,sys,traceback
-import urllib
 import re
-import Queue
+try:
+    import urllib.request as urllib
+except:
+    import urllib # Python 2
+try:
+    import queue
+except ImportError:
+    import Queue as queue # Python 2
 import threading
 import gallery_plugins
-import HTMLParser
+try:
+    import html.parser as HTMLParser
+except ImportError:
+    import HTMLParser # Python 2
 import multiprocessing
 import calendar
-from urlparse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse # Python 2
 html_parser = HTMLParser.HTMLParser()
+try:
+    str_input = raw_input # Python 2
+except:
+    str_input = input
+try:
+    str_type = basestring # Python 2
+except:
+    str_type = str
+
+
 
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
 class BrowserFaker(urllib.FancyURLopener):
     version = "Mozilla/5.0"
 urllib._urlopener = BrowserFaker()
 
-QUEUE = Queue.Queue()
+QUEUE = queue.Queue()
 STANDBY = False
 THREADS = []
 MAX_ATTEMPTS = 10
 
 PLUGIN = gallery_plugins.PLUGINS["plugin_generic"]
-TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
+TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
 DESTPATH_FILE = os.path.join(os.path.dirname(str(__file__)), "last_gallery_dest.txt")
 DEST_ROOT = os.getcwd()
 
@@ -49,8 +71,11 @@ EXCEPTION_NOTICE = """An exception occurred!  We can help if you follow these st
 (If you don't want to share the last line, the rest can still help.)"""
 PARAMS = []
 
-def is_binary(datastring):
-    return bool(datastring.translate(None, TEXTCHARS))
+def is_binary(urlresponse):
+    try:
+        return not 'text/html' in urlresponse.headers['Content-Type']
+    except:
+        return True
 
 def safestr(name):
     name = name.replace(":",";") # to preserve emoticons
@@ -59,7 +84,7 @@ def safestr(name):
     return re.sub(r"[\/\\\*\?\"\<\>\|]", "", name).strip().rstrip(".")
     
 def is_str(obj):
-    return isinstance(obj, basestring)
+    return isinstance(obj, str_type)
 
 def safe_unpack(obj, default):
     if is_str(obj):
@@ -160,7 +185,11 @@ class ImgThread(threading.Thread):
             basename += ext
 
         fileInfo = urllib.urlopen(info.path)
-        modtime = fileInfo.info().getdate('last-modified')
+        try:
+            modtimestr = fileInfo.headers['last-modified']
+            modtime = time.strptime(modtimestr, '%a, %d %b %Y %H:%M:%S %Z')
+        except:
+            modtime = None
 
         fileName = os.path.join(info.dest, basename)
         if os.path.exists(fileName):
@@ -169,18 +198,18 @@ class ImgThread(threading.Thread):
             try:
                 srcsize = int(fileInfo.headers.get("content-length"))
             except:
-                print "Skipping " + fileName + " (couldn't compare file size)"
+                print("Skipping " + fileName + " (couldn't compare file size)")
                 return True
             
             destsize = os.stat(fileName).st_size
             if srcsize == destsize:
-                print "Skipping " + fileName
+                print("Skipping " + fileName)
                 return True
     
         if info.attempts == 1:
-            print "%s -> %s" % (info.path, fileName)
+            print("%s -> %s" % (info.path, fileName))
         else:
-            print "%s -> %s (Attempt %d)" % (info.path, fileName, info.attempts)
+            print("%s -> %s (Attempt %d)" % (info.path, fileName, info.attempts))
         try:
             if not info.data:
                 info.data = fileInfo.read()
@@ -209,33 +238,33 @@ class ImgThread(threading.Thread):
             
             if info.redirect:
                 try:
-                    rpage = urllib.urlopen(info.redirect).read()
+                    response = urllib.urlopen(info.redirect)
                 except:
-                    print "WARNING: Failed to open redirect " + info.redirect
+                    print("WARNING: Failed to open redirect " + info.redirect)
                     continue
 
-                jpegs = run_match(PLUGIN.direct,rpage)
-                if not jpegs:
-                    if is_binary(rpage[:1024]):
-                        # looks like the redirect page is an actual image
-                        info.path = info.redirect
-                        info.data = rpage
-                    else:
-                        print "No links found at redirect page!  Check regex.  Redirect URL:"
-                        print info.redirect
-                elif len(jpegs) == 1 and not info.path:
-                    (info.path,info.subtitle) = safe_unpack(jpegs[0],info.subtitle)
+                if is_binary(response):
+                    # looks like the redirect page is an actual image
+                    info.path = info.redirect
+                    info.data = response.read()
                 else:
-                    # redirect has multiple links, put them in their own subfolders
-                    for j in jpegs:
-                        (j,subtitle) = safe_unpack(j,info.subtitle)
-                        j = safeurl(info.redirect, j)
-                        add_job(path=j, dest=os.path.join(info.dest,subtitle))
+                    jpegs = run_match(PLUGIN.direct,response.read().decode('utf-8'))
+                    if not jpegs:
+                        print("No links found at redirect page!  Check regex.  Redirect URL:")
+                        print(info.redirect)
+                    elif len(jpegs) == 1 and not info.path:
+                        (info.path,info.subtitle) = safe_unpack(jpegs[0],info.subtitle)
+                    else:
+                        # redirect has multiple links, put them in their own subfolders
+                        for j in jpegs:
+                            (j,subtitle) = safe_unpack(j,info.subtitle)
+                            j = safeurl(info.redirect, j)
+                            add_job(path=j, dest=os.path.join(info.dest,subtitle))
             if info.path:
                 info.path = safeurl(info.redirect, info.path)
                 while not self.copyImage(info):
                     if info.attempts >= MAX_ATTEMPTS:
-                        print "ERROR: Failed to copy " + info.path
+                        print("ERROR: Failed to copy " + info.path)
                         break
             QUEUE.task_done()
     
@@ -243,23 +272,23 @@ class ImgThread(threading.Thread):
         try:
             self.run_internal()
         except:
-            print '\n' + '-'*60
+            print('\n' + '-'*60)
             traceback.print_exc(file=sys.stdout)
-            print "Using params: %s" % PARAMS_DEBUG
-            print '-'*60 + '\n'
-            print EXCEPTION_NOTICE
+            print("Using params: %s" % PARAMS_DEBUG)
+            print('-'*60 + '\n')
+            print(EXCEPTION_NOTICE)
             os._exit(1)
 
 def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
     global PLUGIN, QUEUE
     if not myurl:
-        print "Nothing to do!"
+        print("Nothing to do!")
         return
 
     try:
-        page = urllib.urlopen(myurl).read()
+        page = urllib.urlopen(myurl).read().decode('utf-8')
     except:
-        print "ERROR: Couldn't open URL: " + myurl
+        print("ERROR: Couldn't open URL: " + myurl)
         return
     folder = folder.strip()
 
@@ -269,15 +298,15 @@ def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
             continue
         cur_plugin = gallery_plugins.PLUGINS[modname]
         if run_match(cur_plugin.identifier, page):
-            print "Using " + modname
+            print("Using " + modname)
             PLUGIN = cur_plugin
             break
     if PLUGIN.identifier == "generic":
         if "access denied" in page.lower():
-            print "Access was denied! Try saving the gallery page to a local file and use local path instead."
+            print("Access was denied! Try saving the gallery page to a local file and use local path instead.")
             sys.exit(0)
         else:
-            print "Using generic plugin."
+            print("Using generic plugin.")
 
     ### CREATE FOLDER FROM PAGE TITLE
     title = run_match(PLUGIN.title, page, True)
@@ -328,12 +357,12 @@ def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
                 idx += 1
     if not links:
         if folder:
-            print "No links found at %s, plugin may need updating." % myurl
+            print("No links found at %s, plugin may need updating." % myurl)
         else:
-            print "No links found!  Plugin may need updating."
-        print "Sites occasionally change their markup.  Check if this tool has an update."
-        print " - https://github.com/regosen/gallery_get"
-        print " - pip install gallery_get --update"
+            print("No links found!  Plugin may need updating.")
+        print("Sites occasionally change their markup.  Check if this tool has an update.")
+        print(" - https://github.com/regosen/gallery_get")
+        print(" - pip install gallery_get --update")
 
 
 def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True):
@@ -350,18 +379,18 @@ def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True
         if flushJobs:
             flush_jobs()
     except:
-        print '\n' + '-'*60
+        print('\n' + '-'*60)
         traceback.print_exc(file=sys.stdout)
-        print "Using params: %s" % PARAMS_DEBUG
-        print '-'*60 + '\n'
-        print EXCEPTION_NOTICE
+        print("Using params: %s" % PARAMS_DEBUG)
+        print('-'*60 + '\n')
+        print(EXCEPTION_NOTICE)
         return False
     return True
 
 def run_prompted():
     global DEST_ROOT
-    myurl = raw_input("Input URL: ").strip()
-    new_dest = raw_input("Destination (%s): " % DEST_ROOT).strip()
+    myurl = str_input("Input URL: ").strip()
+    new_dest = str_input("Destination (%s): " % DEST_ROOT).strip()
     if new_dest:
         run_wrapped(myurl, new_dest)
     else:

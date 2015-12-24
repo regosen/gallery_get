@@ -57,5 +57,5 @@ for file in os.listdir(directory):
             if 'direct_links' in locals: register_links(name, mod.direct_links)
             if 'same_filename' in locals: register_usefile(name, mod.same_filename)
         except ImportError:
-            print "Gallery: failed to import",
-            print f, ":", sys.exc_value
+            print("Gallery: failed to import")
+            print(f, ":", sys.exc_value)

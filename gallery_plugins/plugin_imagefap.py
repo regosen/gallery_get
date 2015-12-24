@@ -1,5 +1,9 @@
 # Plugin for gallery_get.
-import re,urllib
+import re
+try:
+    import urllib.request as urllib
+except:
+    import urllib # Python 2
 
 # Each definition can be one of the following:
 # - a string
@@ -19,8 +23,8 @@ def redirect(source):
     index = 0
     while True:
         indexed_page = cur_url + "?page=%d" % index
-        print "Crawling " + indexed_page
-        indexed_source = urllib.urlopen(indexed_page).read()
+        print("Crawling " + indexed_page)
+        indexed_source = urllib.urlopen(indexed_page).read().decode('utf-8')
         links = re.findall('href=[\"\'](/photo/.+)[\"\']',indexed_source)
         if links:
             redirects += map(lambda x: 'http://www.imagefap.com' + x, links)
