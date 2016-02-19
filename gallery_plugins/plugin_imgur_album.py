@@ -1,4 +1,5 @@
 # Plugin for gallery_get.
+import re
 
 # Each definition can be one of the following:
 # - a string to match
@@ -7,10 +8,10 @@
 # If you comment out a parameter, it will use the default defined in __init__.py
 
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
-identifier = "imgur.+album.css"
+identifier = "imgurInsideNav._.albumImageStore"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'data-title="(.*?)"'
+title = r'property="og:title" content="(.*?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
@@ -18,14 +19,9 @@ title = r'data-title="(.*?)"'
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
 def direct_links(source):
-    start = source.find("images      :", source.find("Imgur.Album"))+14
-    end = source.find("]}", start) + 2
-    albumimages = []
-    rawAlbumdata = source[start:end].replace(":false,",":False,").replace(":true,",":True,").replace("null",'""')
-    if rawAlbumdata.strip():
-        albumdata = eval(rawAlbumdata)
-        for i in albumdata["images"]:
-            albumimages.append( "http://i.imgur.com/"+i["hash"]+i["ext"] )
-    return albumimages
+    matcher = re.compile(r'"hash":"(.+?)"',re.I)
+    links = matcher.findall(source)
+    links = map(lambda x: "http://i.imgur.com/" + x + ".jpg", links)
+    return links
 
 # same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle). 
