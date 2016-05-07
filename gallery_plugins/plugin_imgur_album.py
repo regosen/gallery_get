@@ -8,7 +8,7 @@ import re
 # If you comment out a parameter, it will use the default defined in __init__.py
 
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
-identifier = "imgurInsideNav._.albumImageStore"
+identifier = "imgur.com/a/"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 title = r'property="og:title" content="(.*?)"'
@@ -19,9 +19,12 @@ title = r'property="og:title" content="(.*?)"'
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
 def direct_links(source):
-    matcher = re.compile(r'"hash":"(.+?)"',re.I)
-    links = matcher.findall(source)
-    links = map(lambda x: "http://i.imgur.com/" + x + ".jpg", links)
+    matcher = re.compile(r'"images":\[(.+?)\]',re.I)
+    sections = matcher.findall(source)
+    links = []
+    for section in sections:
+      array = eval("[" + section.replace("null",'""').replace("true","True").replace("false","False") + "]")
+      links += map(lambda x: "http://i.imgur.com/" + x["hash"] + ".jpg", array)
     return links
 
 # same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle). 
