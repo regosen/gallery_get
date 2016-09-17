@@ -19,11 +19,11 @@ title = r'property="og:title" content="(.*?)"'
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
 def direct_links(source):
-    matcher = re.compile(r'"images":\[(.+?)\]',re.I)
+    matcher = re.compile(r'"images":\[(.+?)\]}',re.I)
     sections = matcher.findall(source)
     links = []
     for section in sections:
-      array = eval("[" + section.replace("null",'""').replace("true","True").replace("false","False") + "]")
+      array = eval("[" + section.replace("null",'""').replace("[","").replace("]","").replace("true","True").replace("false","False") + "]")
       links += map(lambda x: "http://i.imgur.com/" + x["hash"] + ".jpg", array)
     return links
 
