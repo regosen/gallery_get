@@ -9,9 +9,7 @@ def title(source):
     link = 'https://gfycat.com/cajax/get/' + gfyId
     respond = urllib.urlopen(link).read()
     username = re.findall(r'\"userName\":\"(.+?)\",' ,respond)[0]
-    if username == "anonymous":
-        username = "gfycat" + gfyId
-    return username
+    return username if username != "anonymous" else "gfycat " + gfyId
 
 def redirect(source):
     gfyId = re.findall(r'href=\".*gfycat.com/(\w+).*\">', source)[-1]

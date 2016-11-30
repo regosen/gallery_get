@@ -66,21 +66,21 @@ def run_internal(user, dest):
         num_valid_posts = 0
         for post in reddit_json['data']['children']:
             url = post['data']['url']
-                
+
             if url.lower() in visited_links:
                 print("Skipping already visited link: " + url)
                 continue
             else:
                 visited_links.add(url.lower())
-                
+
             cdate = post['data']['created']
             sdate = datetime.datetime.fromtimestamp(cdate).strftime("%Y-%m-%d")
             title = post['data']['title'].replace('/', '_').replace('\\', '_').strip()
             if title:
                 title = " - " + title
-                
+
             folder = os.path.join(dest, user, gallery_get.safestr(sdate + title))
-            
+
             if "/i.imgur.com/" in url:
                 download_image(url, folder)
             elif "/imgur.com/a/" in url:
@@ -97,7 +97,7 @@ def run_internal(user, dest):
                 if real_ext != "jpeg": # jpeg -> jpg
                     ext = real_ext
                 download_image("%s.%s" % (img_base, ext), folder)
-            elif "gfycat.com" in url:
+            elif "/gfycat.com/" in url:
                 if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
                     return False
             elif "vidble.com/album" in url:
