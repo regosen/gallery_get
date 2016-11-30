@@ -17,6 +17,7 @@
 
 import os,time,sys,traceback
 import re
+import io
 try:
     import urllib.request as urllib
 except:
@@ -62,7 +63,7 @@ MAX_ATTEMPTS = 10
 PLUGIN = gallery_plugins.PLUGINS["plugin_generic"]
 TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
 DESTPATH_FILE = os.path.join(os.path.dirname(str(__file__)), "last_gallery_dest.txt")
-DEST_ROOT = os.getcwd()
+DEST_ROOT = os.getcwd().decode("utf8")
 
 EXCEPTION_NOTICE = """An exception occurred!  We can help if you follow these steps:\n
 1. Visit https://github.com/regosen/gallery_get/issues
@@ -373,7 +374,7 @@ def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True
             if dest:
                 safeCacheDestination(dest)
             elif os.path.exists(DESTPATH_FILE):
-                dest = open(DESTPATH_FILE,"r").read().strip()
+                dest = io.open(DESTPATH_FILE,"r").read().strip()
             DEST_ROOT = dest
         run_internal(myurl, dest, titleAsFolder)
         if flushJobs:
@@ -390,7 +391,7 @@ def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True
 def run_prompted():
     global DEST_ROOT
     myurl = str_input("Input URL: ").strip()
-    new_dest = str_input("Destination (%s): " % DEST_ROOT).strip()
+    new_dest = str_input("Destination (%s): " % DEST_ROOT.encode("utf8")).strip()
     if new_dest:
         run_wrapped(myurl, new_dest)
     else:
@@ -412,14 +413,14 @@ def safeCacheDestination(dest):
 cur_file = os.path.basename(str(__file__))
 arg_file = sys.argv[0]
 if os.path.exists(DESTPATH_FILE):
-    DEST_ROOT = open(DESTPATH_FILE,"r").read().strip()
+    DEST_ROOT = io.open(DESTPATH_FILE,"r").read().strip()
     
 if arg_file and os.path.basename(arg_file) == cur_file:
     ### DIRECT LAUNCH (not import)
     if len(sys.argv) > 1:
         # use first parameter as url, second (if exists) as dest
         if len(sys.argv) > 2:
-            DEST_ROOT = sys.argv[2]
+            DEST_ROOT = sys.argv[2].decode("utf8")
             safeCacheDestination(DEST_ROOT)
         run_wrapped(sys.argv[1], DEST_ROOT)
     else:
