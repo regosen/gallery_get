@@ -97,6 +97,9 @@ def run_internal(user, dest):
                 if real_ext != "jpeg": # jpeg -> jpg
                     ext = real_ext
                 download_image("%s.%s" % (img_base, ext), folder)
+            elif "gfycat.com" in url:
+                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
+                    return False
             elif "vidble.com/album" in url:
                 if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
                     return False
