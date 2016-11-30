@@ -23,6 +23,7 @@ Gallery Plugins:
 * imgbox
 * imagevenue
 * imagefap
+* gfycat
 * xHamster
 
 Generic Plugin works for:
