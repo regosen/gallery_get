@@ -47,7 +47,13 @@ try:
 except:
     str_type = str
 
-
+# Python 2/3 compatibility
+def unicode_safe(str):
+    try:
+        str = str.decode("utf8")
+    except:
+        pass
+    return str
 
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
 class BrowserFaker(urllib.FancyURLopener):
@@ -62,7 +68,7 @@ MAX_ATTEMPTS = 10
 PLUGIN = gallery_plugins.PLUGINS["plugin_generic"]
 TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
 DESTPATH_FILE = os.path.join(os.path.dirname(str(__file__)), "last_gallery_dest.txt")
-DEST_ROOT = os.getcwd()
+DEST_ROOT = unicode_safe(os.getcwd())
 
 EXCEPTION_NOTICE = """An exception occurred!  We can help if you follow these steps:\n
 1. Visit https://github.com/regosen/gallery_get/issues
@@ -82,9 +88,10 @@ def safestr(name):
     name = "".join(i for i in name if ord(i)<128)
     name = html_parser.unescape(name)
     return re.sub(r"[\/\\\*\?\"\<\>\|]", "", name).strip().rstrip(".")
-    
+
 def is_str(obj):
     return isinstance(obj, str_type)
+
 
 def safe_unpack(obj, default):
     if is_str(obj):
@@ -93,7 +100,7 @@ def safe_unpack(obj, default):
         return (obj[0],safestr(obj[1]))
     else:
         return ("","")
-    
+
 def run_match(match, source, singleItem=False):
     result = []
     if match:
@@ -157,12 +164,12 @@ def add_job(subtitle="", path="", redirect="", dest="", index=0):
     global QUEUE
     start_jobs()
     QUEUE.put(JobInfo(subtitle=subtitle,path=path, redirect=redirect, dest=dest, index=index))
-    
+
 
 
 class ImgThread(threading.Thread):
     """Threaded Url Grab"""
-    
+
     def copyImage(self, info):
         info.attempts += 1
         indexstr = "%03d" % info.index # 001, 002, etc.
@@ -175,7 +182,7 @@ class ImgThread(threading.Thread):
         elif info.index > 0:
             (basename,ext) = os.path.splitext(basename)
             basename = "%s_%s%s" % (basename, indexstr, ext)
-        
+
         # copy extension (falling back on jpg)
         if not re.match(r".+\.[a-zA-Z0-9]+\Z", basename):
             ext = ".jpg"
@@ -200,12 +207,12 @@ class ImgThread(threading.Thread):
             except:
                 print("Skipping " + fileName + " (couldn't compare file size)")
                 return True
-            
+
             destsize = os.stat(fileName).st_size
             if srcsize == destsize:
                 print("Skipping " + fileName)
                 return True
-    
+
         if info.attempts == 1:
             print("%s -> %s" % (info.path, fileName))
         else:
@@ -226,7 +233,7 @@ class ImgThread(threading.Thread):
             lastmod = calendar.timegm(modtime)
             os.utime(fileName, (lastmod, lastmod))
         return os.path.getsize(fileName) > 4096
-    
+
     def run_internal(self):
         global QUEUE, STANDBY, MAX_ATTEMPTS
         while STANDBY or not QUEUE.empty():
@@ -235,7 +242,7 @@ class ImgThread(threading.Thread):
             except:
                 time.sleep(0.5)
                 continue
-            
+
             if info.redirect:
                 try:
                     response = urllib.urlopen(info.redirect)
@@ -267,7 +274,7 @@ class ImgThread(threading.Thread):
                         print("ERROR: Failed to copy " + info.path)
                         break
             QUEUE.task_done()
-    
+
     def run(self):
         try:
             self.run_internal()
@@ -324,7 +331,7 @@ def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
     else:
         root = title
 
-    
+
     ### QUEUE JOBS FOR OPENING LINKS
     links = []
     # TODO: DRY
@@ -374,7 +381,7 @@ def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True
                 safeCacheDestination(dest)
             elif os.path.exists(DESTPATH_FILE):
                 dest = open(DESTPATH_FILE,"r").read().strip()
-            DEST_ROOT = dest
+            DEST_ROOT = unicode_safe(dest)
         run_internal(myurl, dest, titleAsFolder)
         if flushJobs:
             flush_jobs()
@@ -404,24 +411,22 @@ def run(myurl="", dest=""):
         run_wrapped(myurl, dest)
 
 def safeCacheDestination(dest):
-	try:
-		open(DESTPATH_FILE,"w").write(dest)
-	except:
-		pass
-
+    try:
+        open(DESTPATH_FILE,"w").write(dest)
+    except:
+        open(DESTPATH_FILE,"w").write(dest.encode("utf8"))
 cur_file = os.path.basename(str(__file__))
 arg_file = sys.argv[0]
 if os.path.exists(DESTPATH_FILE):
-    DEST_ROOT = open(DESTPATH_FILE,"r").read().strip()
-    
+    DEST_ROOT = unicode_safe(open(DESTPATH_FILE,"r").read().strip())
+
 if arg_file and os.path.basename(arg_file) == cur_file:
     ### DIRECT LAUNCH (not import)
     if len(sys.argv) > 1:
         # use first parameter as url, second (if exists) as dest
         if len(sys.argv) > 2:
-            DEST_ROOT = sys.argv[2]
+            DEST_ROOT = unicode_safe(sys.argv[2])
             safeCacheDestination(DEST_ROOT)
         run_wrapped(sys.argv[1], DEST_ROOT)
     else:
         run_prompted()
-
