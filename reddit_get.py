@@ -114,6 +114,8 @@ def run_internal(user, dest):
             elif "/gfycat.com/" in url:
                 if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
                     return False
+            elif "/i.reddituploads.com/" in url:
+                download_image(url + ".jpg", folder)
             elif "vidble.com/album" in url:
                 if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
                     return False
