@@ -79,7 +79,7 @@ def run_internal(user, dest):
             if title:
                 title = " - " + title
 
-            folder = os.path.join(dest, user, gallery_get.safestr(sdate + title))
+            folder = os.path.join(gallery_get.unicode_safe(dest), user, gallery_get.safestr(sdate + title))
 
             if "/i.imgur.com/" in url:
                 download_image(url, folder)
@@ -100,6 +100,8 @@ def run_internal(user, dest):
             elif "/gfycat.com/" in url:
                 if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
                     return False
+            elif "/i.reddituploads.com/" in url:
+                download_image(url + ".jpg", folder)
             elif "vidble.com/album" in url:
                 if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
                     return False
@@ -120,7 +122,7 @@ def run_wrapped(user, dest=""):
             gallery_get.safeCacheDestination(dest)
         elif os.path.exists(gallery_get.DESTPATH_FILE):
             dest = open(gallery_get.DESTPATH_FILE,"r").read().strip()
-        DEST_ROOT = dest
+        DEST_ROOT = gallery_get.unicode_safe(dest)
         run_internal(user, dest)
     except:
         print('\n' + '-'*60)
@@ -134,7 +136,7 @@ def run_prompted():
     if not user:
         print("Nothing to do!")
         sys.exit()
-    new_dest = str_input("Destination (%s): " % DEST_ROOT).strip()
+    new_dest = str_input("Destination (%s): " % gallery_get.encode_safe(DEST_ROOT)).strip()
     run_wrapped(user, new_dest)
 
 def run(user="", dest=""):
