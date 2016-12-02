@@ -54,7 +54,13 @@ def unicode_safe(str):
     except:
         pass
     return str
-
+def encode_safe(in_str):
+    try:
+        if isinstance(in_str,unicode):
+            in_str = in_str.encode("utf8")
+    except:
+        pass
+    return in_str
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
 class BrowserFaker(urllib.FancyURLopener):
     version = "Mozilla/5.0"
@@ -397,7 +403,7 @@ def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True
 def run_prompted():
     global DEST_ROOT
     myurl = str_input("Input URL: ").strip()
-    new_dest = str_input("Destination (%s): " % DEST_ROOT).strip()
+    new_dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
     if new_dest:
         run_wrapped(myurl, new_dest)
     else:

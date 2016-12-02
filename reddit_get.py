@@ -25,6 +25,20 @@ try:
 except:
     str_input = input
 
+# Python 2/3 compatibility
+def unicode_safe(str):
+    try:
+        str = str.decode("utf8")
+    except:
+        pass
+    return str
+def encode_safe(in_str):
+    try:
+        if isinstance(in_str,unicode):
+            in_str = in_str.encode("utf8")
+    except:
+        pass
+    return in_str
 def reddit_url(user):
     return "http://www.reddit.com/user/%s/submitted/.json?limit=1000" % user
 
@@ -79,7 +93,7 @@ def run_internal(user, dest):
             if title:
                 title = " - " + title
 
-            folder = os.path.join(dest, user, gallery_get.safestr(sdate + title))
+            folder = os.path.join(unicode_safe(dest), user, gallery_get.safestr(sdate + title))
 
             if "/i.imgur.com/" in url:
                 download_image(url, folder)
@@ -120,7 +134,7 @@ def run_wrapped(user, dest=""):
             gallery_get.safeCacheDestination(dest)
         elif os.path.exists(gallery_get.DESTPATH_FILE):
             dest = open(gallery_get.DESTPATH_FILE,"r").read().strip()
-        DEST_ROOT = dest
+        DEST_ROOT = unicode_safe(dest)
         run_internal(user, dest)
     except:
         print('\n' + '-'*60)
@@ -134,7 +148,7 @@ def run_prompted():
     if not user:
         print("Nothing to do!")
         sys.exit()
-    new_dest = str_input("Destination (%s): " % DEST_ROOT).strip()
+    new_dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
     run_wrapped(user, new_dest)
 
 def run(user="", dest=""):
