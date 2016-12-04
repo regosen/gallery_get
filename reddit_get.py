@@ -10,19 +10,25 @@
 # Nov 2, 2013
 #
 
-
 import gallery_get
 import os, time, sys, traceback
 import datetime, json
+
+# Python 3 imports that throw in Python 2
 try:
     import urllib.request as urllib
 except:
-    import urllib # Python 2
+    # This is Python 2
+    import urllib
+
 DEST_ROOT = gallery_get.DEST_ROOT
 gallery_get.PLUGIN = gallery_get.gallery_plugins.PLUGINS["plugin_imgur_album"]
+
+# Python 2 types that throw in Python 3
 try:
-    str_input = raw_input # Python 2
+    str_input = raw_input
 except:
+    # This is Python 3
     str_input = input
 
 def reddit_url(user):

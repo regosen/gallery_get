@@ -14,46 +14,46 @@
 # Aug 22, 2013
 #
 
-
 import os,time,sys,traceback
 import re
-try:
-    import urllib.request as urllib
-except:
-    import urllib # Python 2
+
+# Python 3 imports that throw in Python 2
 try:
     import queue
-except ImportError:
-    import Queue as queue # Python 2
-import threading
-import gallery_plugins
-try:
     import html.parser as HTMLParser
-except ImportError:
-    import HTMLParser # Python 2
-import multiprocessing
-import calendar
-try:
+    import urllib.request as urllib
     from urllib.parse import urlparse
 except ImportError:
-    from urlparse import urlparse # Python 2
+    # This is Python 2
+    import Queue as queue
+    import HTMLParser
+    import urllib
+    from urlparse import urlparse
+
+import threading
+import gallery_plugins
+import multiprocessing
+import calendar
+
 html_parser = HTMLParser.HTMLParser()
+
+# Python 2 types that throw in Python 3
 try:
-    str_input = raw_input # Python 2
+    str_input = raw_input
+    str_type = basestring
 except:
+    # This is Python 3
     str_input = input
-try:
-    str_type = basestring # Python 2
-except:
     str_type = str
 
-# Python 2/3 compatibility
+# Python 2<>3 compatibility methods
 def unicode_safe(str):
     try:
         str = str.decode("utf8")
     except:
         pass
     return str
+
 def encode_safe(in_str):
     try:
         if isinstance(in_str,unicode):
@@ -61,6 +61,7 @@ def encode_safe(in_str):
     except:
         pass
     return in_str
+
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
 class BrowserFaker(urllib.FancyURLopener):
     version = "Mozilla/5.0"
