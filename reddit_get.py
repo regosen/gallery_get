@@ -21,6 +21,11 @@ except:
     # This is Python 2
     import urllib
 
+# some galleries reject requests if they're not coming from a browser- this is to get past that.
+class BrowserFaker(urllib.FancyURLopener):
+    version = "Mozilla/5.0"
+urllib._urlopener = BrowserFaker()
+
 DEST_ROOT = gallery_get.DEST_ROOT
 gallery_get.PLUGIN = gallery_get.gallery_plugins.PLUGINS["plugin_imgur_album"]
 
@@ -56,12 +61,15 @@ def run_internal(user, dest):
     else:
         print("Requesting JSON data from reddit...")
         for i in range(5):
-            reddit_json_str = urllib.urlopen(reddit_url(user)).read().decode('utf-8')
-            reddit_json = json.loads(reddit_json_str)
+            try:
+                reddit_json_str = urllib.urlopen(reddit_url(user)).read().decode('utf-8')
+                reddit_json = json.loads(reddit_json_str)
+            except urllib.HTTPError:
+                pass
             if "data" in reddit_json:
                 break
             else:
-                time.sleep(2)
+                time.sleep(2) # workaround for server-side request frequency issues
 
     if not "data" in reddit_json:
         print("ERROR getting json data after several retries!  Does the user exist?")
@@ -87,9 +95,13 @@ def run_internal(user, dest):
 
             folder = os.path.join(gallery_get.unicode_safe(dest), user, gallery_get.safestr(sdate + title))
 
+            #TODO: let gallery_get handle these links instead of duplicating logic here
             if "/i.imgur.com/" in url:
                 download_image(url, folder)
             elif "/imgur.com/a/" in url:
+                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
+                    return False
+            elif "/imgur.com/gallery/" in url:
                 if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
                     return False
             elif "/imgur.com/" in url:

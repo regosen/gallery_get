@@ -193,13 +193,13 @@ class ImgThread(threading.Thread):
         # copy extension (falling back on jpg)
         if not re.match(r".+\.[a-zA-Z0-9]+\Z", basename):
             ext = ".jpg"
-            tokens = info.path.split("?")[0].split(".")
+            tokens = info.path.split("?")[0].split("/")[-1].split(".")
             if len(tokens) > 1:
                 ext = "." + tokens[-1]
             basename += ext
 
-        fileInfo = urllib.urlopen(info.path)
         try:
+            fileInfo = urllib.urlopen(info.path)
             modtimestr = fileInfo.headers['last-modified']
             modtime = time.strptime(modtimestr, '%a, %d %b %Y %H:%M:%S %Z')
         except:
@@ -227,7 +227,6 @@ class ImgThread(threading.Thread):
         try:
             if not info.data:
                 info.data = fileInfo.read()
-
         except:
             # don't bother printing anything, will display next attempt
             return False
@@ -288,7 +287,7 @@ class ImgThread(threading.Thread):
         except:
             print('\n' + '-'*60)
             traceback.print_exc(file=sys.stdout)
-            print("Using params: %s" % PARAMS_DEBUG)
+            print("Using params: %s" % sys.argv)
             print('-'*60 + '\n')
             print(EXCEPTION_NOTICE)
             os._exit(1)
