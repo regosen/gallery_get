@@ -21,13 +21,13 @@ import re
 try:
     import queue
     import html.parser as HTMLParser
-    import urllib.request as urllib
+    from urllib.request import Request, urlopen
     from urllib.parse import urlparse
 except ImportError:
     # This is Python 2
     import Queue as queue
     import HTMLParser
-    import urllib
+    from urllib2 import Request, urlopen
     from urlparse import urlparse
 
 import threading
@@ -63,9 +63,10 @@ def encode_safe(in_str):
     return in_str
 
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
-class BrowserFaker(urllib.FancyURLopener):
-    version = "Mozilla/5.0"
-urllib._urlopener = BrowserFaker()
+def urlopen_safe(url):
+    q = Request(url)
+    q.add_header('User-Agent', 'Mozilla/5.0')
+    return urlopen(q)
 
 QUEUE = queue.Queue()
 STANDBY = False
@@ -199,7 +200,7 @@ class ImgThread(threading.Thread):
             basename += ext
 
         try:
-            fileInfo = urllib.urlopen(info.path)
+            fileInfo = urlopen_safe(info.path)
             modtimestr = fileInfo.headers['last-modified']
             modtime = time.strptime(modtimestr, '%a, %d %b %Y %H:%M:%S %Z')
         except:
@@ -251,7 +252,7 @@ class ImgThread(threading.Thread):
 
             if info.redirect:
                 try:
-                    response = urllib.urlopen(info.redirect)
+                    response = urlopen_safe(info.redirect)
                 except:
                     print("WARNING: Failed to open redirect " + info.redirect)
                     continue
@@ -299,7 +300,7 @@ def run_internal(myurl,folder=DEST_ROOT,usetitleasfolder=True):
         return
 
     try:
-        page = urllib.urlopen(myurl).read().decode('utf-8')
+        page = urlopen_safe(myurl).read().decode('utf-8')
     except:
         print("ERROR: Couldn't open URL: " + myurl)
         return
