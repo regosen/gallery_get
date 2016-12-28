@@ -14,43 +14,22 @@ import gallery_get
 import os, time, sys, traceback
 import datetime, json
 
-# Python 3 imports that throw in Python 2
-try:
-    from urllib.request import Request, urlopen
-except:
-    # This is Python 2
-    from urllib2 import Request, urlopen
-
-# some galleries reject requests if they're not coming from a browser- this is to get past that.
-def urlopen_safe(url):
-    q = Request(url)
-    q.add_header('User-Agent', 'Mozilla/5.0')
-    return urlopen(q)
+from gallery_utils import *
+import gallery_plugins
 
 DEST_ROOT = gallery_get.DEST_ROOT
-gallery_get.PLUGIN = gallery_get.gallery_plugins.PLUGINS["plugin_imgur_album"]
-
-# Python 2 types that throw in Python 3
-try:
-    str_input = raw_input
-except:
-    # This is Python 3
-    str_input = input
 
 def reddit_url(user):
     return "http://www.reddit.com/user/%s/submitted/.json?limit=1000" % user
 
-def download_image(url, fileNameFull):
-    urlBase, fileExtension = os.path.splitext(url)
-    fileName = os.path.abspath(fileNameFull)[:255] + fileExtension #full path must be 260 characters or lower
-    folder = os.path.dirname(fileName)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    elif os.path.exists(fileName):
-        print("Skipping " + fileName)
-        return
-    gallery_get.add_job(path=url, dest=folder, subtitle=fileName)
+def is_individual_imgur(url):
+    if "/imgur.com/a/" in url:
+        return False
+    if "/imgur.com/gallery/" in url:
+        return False
+    return True
 
+# TODO: use queue or eventlet for launching gallery_get.run_wrapped()
 def run_internal(user, dest):
     reddit_json_str = ""
     reddit_json = {}
@@ -96,44 +75,27 @@ def run_internal(user, dest):
                 title = " - " + title
 
             folder = os.path.join(gallery_get.unicode_safe(dest), user, gallery_get.safestr(sdate + title))
-
-            #TODO: let gallery_get handle these links instead of duplicating logic here
-            if "/i.imgur.com/" in url:
-                download_image(url, folder)
-            elif "/imgur.com/a/" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif "/imgur.com/gallery/" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif "/imgur.com/" in url:
+            
+            # special shortcuts for skipping the redirect
+            if "/i.reddituploads.com/" in url:
+                gallery_get.download_image(url + ".jpg", folder)
+            elif "/imgur.com/" in url and is_individual_imgur(url):
                 # Create direct image URL with dummy extension (otherwise it will redirect)
                 # Then get correct extension from header
-                # (This is way faster than opening the redirect)
                 img_base = url.replace("/imgur.com/","/i.imgur.com/")
                 ext = "jpg"
                 file = urlopen_safe("%s.%s" % (img_base, ext))
                 real_ext = file.headers.get("content-type")[6:]
                 if real_ext != "jpeg": # jpeg -> jpg
                     ext = real_ext
-                download_image("%s.%s" % (img_base, ext), folder)
-            elif "/gfycat.com/" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif "/i.reddituploads.com/" in url:
-                download_image(url + ".jpg", folder)
-            elif "vidble.com/album" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif url.endswith(".jpg") or url.endswith(".jpeg") or url.endswith(".gif"):
-                download_image(url, folder)
+                gallery_get.download_image("%s.%s" % (img_base, ext), folder)
+            elif "/i.imgur.com/" in url:
+                gallery_get.download_image(url, folder)
             else:
-                continue
-            num_valid_posts += 1
+                gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False, allowGenericPlugin=False)
 
         gallery_get.flush_jobs()
-        if num_valid_posts == 0:
-            print("\nApparently this user hasn't submitted any imgur links.  Nothing to do.")
+        print("Done!")
 
 def run_wrapped(user, dest=""):
     global DEST_ROOT
