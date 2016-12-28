@@ -14,6 +14,13 @@ identifier = "imgur.com/a/"
 title = r'property="og:title" content="(.*?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
+def redirect(source):
+  if "post-loadall" in source:
+    # not all images are available on this page, redirect to grid version instead
+    regex = r'class="post-gridview-link"[^<>]+?href="(.+?)"'
+    return re.findall(regex, source, re.I)
+  else:
+    return None
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
