@@ -13,12 +13,20 @@
 import gallery_get
 import os, time, sys, traceback
 import datetime, json
+from urlparse import urlparse
 
 from gallery_utils import *
 import gallery_plugins
 
 DEST_ROOT = gallery_get.DEST_ROOT
 safe_makedirs(DEST_ROOT)
+
+# To speed this up, don't craw links with pages that we know aren't galleries
+NON_GALLERY_DOMAINS = [
+"youtube.com",
+"youtu.be",
+"www.reddit.com"
+]
 
 def reddit_url(user):
     return "http://www.reddit.com/user/%s/submitted/.json?limit=1000" % user
@@ -64,8 +72,11 @@ def run_internal(user, dest):
         num_valid_posts = 0
         for post in reddit_json['data']['children']:
             url = post['data']['url']
-
-            if url.lower() in visited_links:
+            domain = urlparse(url).netloc.lower()
+            if any(x in domain for x in NON_GALLERY_DOMAINS):
+                print("Skipping non-gallery link: " + url)
+                continue
+            elif url.lower() in visited_links:
                 print("Skipping already visited link: " + url)
                 continue
             else:
