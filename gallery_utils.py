@@ -3,9 +3,11 @@ import os
 # Python 3 imports that throw in Python 2
 try:
     from urllib.request import Request, urlopen, URLError
+    from urllib.parse import urlparse
 except ImportError:
     # This is Python 2
     from urllib2 import Request, urlopen, URLError
+    from urlparse import urlparse
 
 # Python 2 types that throw in Python 3
 try:

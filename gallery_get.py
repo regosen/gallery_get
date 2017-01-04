@@ -21,12 +21,10 @@ import re
 try:
     import queue
     import html.parser as HTMLParser
-    from urllib.parse import urlparse
 except ImportError:
     # This is Python 2
     import Queue as queue
     import HTMLParser
-    from urlparse import urlparse
 
 import threading
 from gallery_utils import *

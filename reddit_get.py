@@ -13,7 +13,6 @@
 import gallery_get
 import os, time, sys, traceback
 import datetime, json
-from urlparse import urlparse
 
 from gallery_utils import *
 import gallery_plugins
