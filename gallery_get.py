@@ -137,6 +137,7 @@ class JobInfo(object):
         self.attempts = 0
         self.dest = dest
         self.data = None
+        self.override = None
 
 def start_jobs():
     global STANDBY, THREADS
@@ -169,7 +170,9 @@ class ImgThread(threading.Thread):
         indexstr = "%03d" % info.index # 001, 002, etc.
 
         basename = info.subtitle
-        if info.plugin and info.plugin.useFilename:
+        if info.override:
+            basename = info.override
+        elif info.plugin and info.plugin.useFilename:
             basename = os.path.basename(info.path).split("?")[0]
         elif not basename or basename == FALLBACK_TITLE:
             basename = indexstr
@@ -246,6 +249,7 @@ class ImgThread(threading.Thread):
                     # looks like the redirect page is an actual image
                     info.path = info.redirect
                     info.data = response.read()
+                    info.override = info.subtitle
                 elif info.plugin:
                     jpegs = run_match(info.plugin.direct,response.read().decode('utf-8'))
                     if not jpegs:
