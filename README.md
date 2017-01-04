@@ -19,12 +19,14 @@ Platforms, Python Versions:
 Gallery Plugins:
 
 * imgur (albums and galleries)
-* reddit (only imgur links for now)
 * imgbox
 * imagevenue
 * imagefap
+* 4chan
 * gfycat
 * xHamster
+* fuskator
+* vidble
 
 Generic Plugin works for:
 
@@ -86,6 +88,22 @@ If you run gallery_get or reddit_get on the same URL/user and destination more t
 
 gallery_get comes with a few "plugins" customized for certain sites, along with a generic fallback plugin that works on multiple galleries.  Note that galleries will change their markup from time to time, so these plugins may need to be updated to catch up with such changes.  (Which brings us to the next section...)
 
+## Testing
+
+I've provided a testing suite called gallery_get_test.py that will run gallery_get/reddit_get with provided URLs and users.  Options are as follows
+```
+  --noprompt          don't prompt for extra galleries
+  --input=INPUT_PATH  input CSV for testing (same format as output)
+```
+INPUT_PATH defaults to gallery_get_test_input.csv (provided)
+The output is gallery_get_test_output.csv
+
+To add a new gallery/user to the test:
+
+  1. run gallery_get_test.py
+  2. enter your gallery/user
+  3. repeat step 2 for additional galleries/users
+  4. if the output looks ok, replace gallery_get_test_input.csv with gallery_get_test_output.csv
 
 ## Contribute
 
