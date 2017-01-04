@@ -18,6 +18,7 @@ from gallery_utils import *
 import gallery_plugins
 
 DEST_ROOT = gallery_get.DEST_ROOT
+safe_makedirs(DEST_ROOT)
 
 def reddit_url(user):
     return "http://www.reddit.com/user/%s/submitted/.json?limit=1000" % user
@@ -44,8 +45,10 @@ def run_internal(user, dest):
             try:
                 reddit_json_str = urlopen_safe(reddit_url(user)).read().decode('utf-8')
                 reddit_json = json.loads(reddit_json_str)
+            except URLError:
+                break
             except Exception as e:
-                if e.code == 404:
+                if hasattr(e, 'code') and e.code == 404:
                     break
             if "data" in reddit_json:
                 break
@@ -74,7 +77,7 @@ def run_internal(user, dest):
             if title:
                 title = " - " + title
 
-            folder = os.path.join(gallery_get.unicode_safe(dest), user, gallery_get.safestr(sdate + title))
+            folder = os.path.join(unicode_safe(dest), user, gallery_get.safe_str(sdate + title))
             
             # special shortcuts for skipping the redirect
             if "/i.reddituploads.com/" in url:
@@ -104,7 +107,7 @@ def run_wrapped(user, dest=""):
             gallery_get.safeCacheDestination(dest)
         elif os.path.exists(gallery_get.DESTPATH_FILE):
             dest = open(gallery_get.DESTPATH_FILE,"r").read().strip()
-        DEST_ROOT = gallery_get.unicode_safe(dest)
+        DEST_ROOT = unicode_safe(dest)
         run_internal(user, dest)
     except:
         print('\n' + '-'*60)
@@ -112,13 +115,14 @@ def run_wrapped(user, dest=""):
         print("Using params: [%s, %s]" % (user, dest))
         print('-'*60 + '\n')
         print(gallery_get.EXCEPTION_NOTICE)
+    return os.path.join(DEST_ROOT, user)
 
 def run_prompted():
     user = str_input("Input reddit user: ").strip()
     if not user:
         print("Nothing to do!")
         sys.exit()
-    new_dest = str_input("Destination (%s): " % gallery_get.encode_safe(DEST_ROOT)).strip()
+    new_dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
     run_wrapped(user, new_dest)
 
 def run(user="", dest=""):

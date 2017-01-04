@@ -58,24 +58,17 @@ def is_binary(urlresponse):
     except:
         return True
 
-def safestr(name):
+def safe_str(name):
     name = name.replace(":",";") # to preserve emoticons
     name = "".join(i for i in name if ord(i)<128)
     name = html_parser.unescape(name)
     return re.sub(r"[\/\\\*\?\"\<\>\|]", "", name).strip().rstrip(".")
 
-def is_str(obj):
-    return isinstance(obj, str_type)
-
-def safe_makedirs(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
 def safe_unpack(obj, default):
     if is_str(obj):
-        return (obj,safestr(default))
+        return (obj,safe_str(default))
     elif obj:
-        return (obj[0],safestr(obj[1]))
+        return (obj[0],safe_str(obj[1]))
     else:
         return ("","")
 
@@ -101,7 +94,7 @@ def run_match(match, source, singleItem=False):
         result = result if is_str(result) else result[0] if result else ""
     elif is_str(result):
         result = [result]
-    elif hasattr(result, '__iter__'):
+    elif is_iterable(result):
         # remove duplicates without affecting order (like set does)
         visited = set()
         visited_add = visited.add
@@ -305,13 +298,16 @@ def run_internal(myurl, folder=DEST_ROOT, useTitleAsFolder=True, allowGenericPlu
     global QUEUE
     if not myurl:
         print("Nothing to do!")
-        return
+        return False
 
     try:
         page = urlopen_safe(myurl).read().decode('utf-8')
     except:
-        # this could be a direct image
-        return download_image(myurl,folder)
+        if folder == DEST_ROOT:
+            return False # failed at root folder, no direct images belong here
+        else:
+            # this could be a direct image
+            return download_image(myurl,folder)
 
     folder = folder.strip()
 
@@ -329,7 +325,7 @@ def run_internal(myurl, folder=DEST_ROOT, useTitleAsFolder=True, allowGenericPlu
     ### CREATE FOLDER FROM PAGE TITLE
     title = run_match(plugin.title, page, True)
     (title, subtitle) = safe_unpack(title, "")
-    title = safestr(title)
+    title = safe_str(title)
     if not title:
         title = FALLBACK_TITLE
     root = ""
@@ -341,7 +337,6 @@ def run_internal(myurl, folder=DEST_ROOT, useTitleAsFolder=True, allowGenericPlu
             root = os.path.join(folder, title)
     else:
         root = title
-
 
     ### QUEUE JOBS FOR OPENING LINKS
     links = []

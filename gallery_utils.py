@@ -1,9 +1,11 @@
+import os
+
 # Python 3 imports that throw in Python 2
 try:
-    from urllib.request import Request, urlopen
+    from urllib.request import Request, urlopen, URLError
 except ImportError:
     # This is Python 2
-    from urllib2 import Request, urlopen
+    from urllib2 import Request, urlopen, URLError
 
 # Python 2 types that throw in Python 3
 try:
@@ -30,9 +32,18 @@ def encode_safe(in_str):
         pass
     return in_str
 
-import time
+def is_str(obj):
+    return isinstance(obj, str_type)
+
+def is_iterable(obj):
+    return hasattr(obj, '__iter__') and not is_str(obj)
+
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
 def urlopen_safe(url):
     q = Request(url)
     q.add_header('User-Agent', 'Mozilla/5.0')
     return urlopen(q)
+
+def safe_makedirs(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
