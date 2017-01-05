@@ -6,6 +6,7 @@ from optparse import OptionParser
 DEST_ROOT = gallery_get.DEST_ROOT
 INPUT_PATH = "gallery_get_test_input.csv"
 OUTPUT_PATH = "gallery_get_test_output.csv"
+FAILED_TEST_CASES = []
 
 parser = OptionParser()
 parser.add_option(
@@ -42,15 +43,16 @@ class GalleryTest(object):
       self.compare(*params)
 
   def _compare_internal(self, real_val, expected_val, name):
+    global FAILED_TEST_CASES
     if real_val != expected_val:
-      print("ERROR testing %s: failed to match %s!  got (%s), expected (%s)" % (self.debugname, name, str(real_val), str(expected_val)))
+      FAILED_TEST_CASES.append("TEST FAILED in %s: %s = %s (expected %s)" % (self.debugname, name, str(real_val), str(expected_val)))
       self.status = False
 
   def compare(self, title, num_files, size):
     self.status = True
     self._compare_internal(self.title, title, "title")
-    self._compare_internal(len(self.files), num_files, "number of files")
-    self._compare_internal(self.size, size, "total size of images")
+    self._compare_internal(len(self.files), int(num_files), "number of files")
+    self._compare_internal(self.size, int(size), "total size")
     return self.status
 
 
@@ -101,15 +103,18 @@ def write_report(results, output_path):
   file.close()
 
   print("")
-  if all(test.status == True for test in results):
-    print("All tests succeeded!")
-  elif all(test.status != False for test in results):
-    print("All tests completed!  Please inspect new rows in report and replace your input file if satisfied.")
+  if FAILED_TEST_CASES:
+    print("="*12)
+    print "\n".join(FAILED_TEST_CASES)
+    print("="*12)
+  succeeded = sum(test.status == True for test in results)
+  failed = sum(test.status == False for test in results)
+  pending = sum(test.status == None for test in results)
+  if pending > 0:
+    print("Summary: %d succeeded, %d failed, %d ready to add" % (succeeded, failed, pending))
   else:
-    num_failed = sum(test.status == False for test in results)
-    print("%d test(s) failed" % num_failed)
-
-  print("Report written to %s" % output_path)
+    print("Summary: %d succeeded, %d failed" % (succeeded, failed))
+  print("Results written to %s" % output_path)
   print("")
 
 
