@@ -38,10 +38,13 @@ QUEUE = queue.Queue()
 STANDBY = False
 THREADS = []
 MAX_ATTEMPTS = 10
+ERRORS_ENCOUNTERED = False
 
 TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
 DESTPATH_FILE = os.path.join(os.path.dirname(str(__file__)), "last_gallery_dest.txt")
 DEST_ROOT = unicode_safe(os.getcwd())
+if os.path.exists(DESTPATH_FILE):
+    DEST_ROOT = unicode_safe(open(DESTPATH_FILE,"r").read().strip())
 
 EXCEPTION_NOTICE = """An exception occurred!  We can help if you follow these steps:\n
 1. Visit https://github.com/regosen/gallery_get/issues
@@ -50,11 +53,6 @@ EXCEPTION_NOTICE = """An exception occurred!  We can help if you follow these st
 (If you don't want to share the last line, the rest can still help.)"""
 PARAMS = []
 
-def is_binary(urlresponse):
-    try:
-        return not 'text/html' in urlresponse.headers['Content-Type']
-    except:
-        return True
 
 def safe_str(name):
     name = name.replace(":",";") # to preserve emoticons
@@ -69,6 +67,18 @@ def safe_unpack(obj, default):
         return (obj[0],safe_str(obj[1]))
     else:
         return ("","")
+
+def safe_url(parent, link):
+    if not link.lower().startswith("http"):
+        uri=urlparse(parent)
+        root = '{uri.scheme}://{uri.netloc}/'.format(uri=uri)
+        if link.startswith("//"):
+            link = "%s:%s" % (uri.scheme, link)
+        elif link.startswith("/") or root.strip('/').lower() == parent.strip('/').lower():
+            link = root + link
+        else:
+            link = os.path.dirname(parent) + "/" + link
+    return link.replace("&amp;","&")
 
 def run_match(match, source, singleItem=False):
     result = []
@@ -99,31 +109,23 @@ def run_match(match, source, singleItem=False):
         result = [x for x in result if not (x in visited or visited_add(x))]
     return result if result else []
 
-def safeurl(parent, link):
-    if not link.lower().startswith("http"):
-        uri=urlparse(parent)
-        root = '{uri.scheme}://{uri.netloc}/'.format(uri=uri)
-        if link.startswith("//"):
-            link = "%s:%s" % (uri.scheme, link)
-        elif link.startswith("/") or root.strip('/').lower() == parent.strip('/').lower():
-            link = root + link
-        else:
-            link = os.path.dirname(parent) + "/" + link
-    return link.replace("&amp;","&")
-
-def match_plugin(page):
-    plugin = PLUGINS["plugin_generic"]
-    for modname in PLUGINS.keys():
-        if modname == "plugin_generic":
-            continue
-        cur_plugin = PLUGINS[modname]
-        if run_match(cur_plugin.identifier, page):
-            plugin = cur_plugin
-            break
-    if plugin.identifier == "generic":
-        if "access denied" in page.lower():
-            plugin = None 
-    return plugin
+def download_image(url, fileNameFull):
+    global ERRORS_ENCOUNTERED
+    try:
+        urlBase, fileExtension = os.path.splitext(url)
+        fileName = os.path.abspath(fileNameFull)[:255] + fileExtension # full path must be 260 characters or lower
+        folder = os.path.dirname(fileName)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        elif os.path.exists(fileName):
+            print("Skipping existing file: " + url)
+            return folder
+        add_job(path=url, dest=folder, subtitle=fileName)
+        return folder
+    except:
+        print("ERROR: Couldn't open URL: " + url)
+        ERRORS_ENCOUNTERED = True
+        return False
 
 class JobInfo(object):
     def __init__(self, plugin=None, subtitle="", path="", redirect="", dest="", index=0):
@@ -137,6 +139,44 @@ class JobInfo(object):
         self.data = None
         self.override = None
 
+    def destination_filename(self):
+        indexstr = "%03d" % self.index # 001, 002, etc.
+
+        basename = self.subtitle
+        if self.override:
+            basename = self.override
+        elif self.plugin and self.plugin.useFilename:
+            basename = os.path.basename(self.path).split("?")[0]
+        elif not basename or basename == FALLBACK_TITLE:
+            basename = indexstr
+        elif self.index > 0:
+            (basename,ext) = os.path.splitext(basename)
+            basename = "%s_%s%s" % (basename, indexstr, ext)
+
+        # copy extension (falling back on jpg)
+        if not re.match(r".+\.[a-zA-Z0-9]+\Z", basename):
+            ext = ".jpg"
+            tokens = self.path.split("?")[0].split("/")[-1].split(".")
+            if len(tokens) > 1:
+                ext = "." + tokens[-1]
+            basename += ext
+        return os.path.join(self.dest, basename)
+
+    def write_to_file(self, file_info, file_name):
+        success = True
+        try:
+            if not self.data:
+                self.data = file_info.read()
+        except:
+            success = False
+
+        file_info.close()
+        if success:
+            output = open(file_name,'wb')
+            output.write(self.data)
+            output.close()
+        return success
+
 def start_jobs():
     global STANDBY, THREADS
     if not THREADS:
@@ -147,11 +187,19 @@ def start_jobs():
             THREADS.append(t)
 
 def flush_jobs():
-    global STANDBY, THREADS
+    global STANDBY, THREADS, ERRORS_ENCOUNTERED
     STANDBY = False
     for t in THREADS:
         t.join()
     THREADS = []
+
+    success = not ERRORS_ENCOUNTERED
+    ERRORS_ENCOUNTERED = False
+    if success:
+        print("Done!")
+    else:
+        print("Errors were encountered!  Please check messages above.")
+    return success
 
 def add_job(plugin=None, subtitle="", path="", redirect="", dest="", index=0):
     global QUEUE
@@ -159,77 +207,83 @@ def add_job(plugin=None, subtitle="", path="", redirect="", dest="", index=0):
     QUEUE.put(JobInfo(plugin=plugin, subtitle=subtitle, path=path, redirect=redirect, dest=dest, index=index))
 
 
-
 class ImgThread(threading.Thread):
     """Threaded Url Grab"""
 
-    def copyImage(self, info):
+    def can_skip(self, file_name, file_info):
+        if os.path.exists(file_name):
+            # file already exists.  Skip if same size
+            srcsize = 0
+            try:
+                srcsize = int(file_info.headers.get("content-length"))
+            except:
+                return True
+
+            destsize = os.stat(file_name).st_size
+            if srcsize == destsize:
+                return True
+
+        return False
+
+    def copy_image(self, info):
         info.attempts += 1
-        indexstr = "%03d" % info.index # 001, 002, etc.
-
-        basename = info.subtitle
-        if info.override:
-            basename = info.override
-        elif info.plugin and info.plugin.useFilename:
-            basename = os.path.basename(info.path).split("?")[0]
-        elif not basename or basename == FALLBACK_TITLE:
-            basename = indexstr
-        elif info.index > 0:
-            (basename,ext) = os.path.splitext(basename)
-            basename = "%s_%s%s" % (basename, indexstr, ext)
-
-        # copy extension (falling back on jpg)
-        if not re.match(r".+\.[a-zA-Z0-9]+\Z", basename):
-            ext = ".jpg"
-            tokens = info.path.split("?")[0].split("/")[-1].split(".")
-            if len(tokens) > 1:
-                ext = "." + tokens[-1]
-            basename += ext
+        
+        file_name = info.destination_filename()
+        try:
+            file_info = urlopen_safe(info.path)
+        except:
+            return False
 
         try:
-            fileInfo = urlopen_safe(info.path)
-            modtimestr = fileInfo.headers['last-modified']
+            modtimestr = file_info.headers['last-modified']
             modtime = time.strptime(modtimestr, '%a, %d %b %Y %H:%M:%S %Z')
         except:
             modtime = None
 
-        fileName = os.path.join(info.dest, basename)
-        if os.path.exists(fileName):
-            # file already exists.  Skip if same size
-            srcsize = 0
-            try:
-                srcsize = int(fileInfo.headers.get("content-length"))
-            except:
-                print("Skipping " + fileName + " (couldn't compare file size)")
-                return True
-
-            destsize = os.stat(fileName).st_size
-            if srcsize == destsize:
-                print("Skipping " + fileName)
-                return True
+        if self.can_skip(file_name, file_info):
+            print("Skipping existing file: " + info.path)
+            return True
 
         if info.attempts == 1:
-            print("%s -> %s" % (info.path, fileName))
-        else:
-            print("%s -> %s (Attempt %d)" % (info.path, fileName, info.attempts))
-        if not info.data:
-            try:
-                info.data = fileInfo.read()
-            except:
-                # don't bother printing anything, will display next attempt
-                return False
+            print("%s -> %s" % (info.path, file_name))
 
-        fileInfo.close()
-        output = open(fileName,'wb')
-        output.write(info.data)
-        output.close()
+        if not info.write_to_file(file_info, file_name):
+            return False
+
         if modtime is not None:
             lastmod = calendar.timegm(modtime)
-            os.utime(fileName, (lastmod, lastmod))
-        return os.path.getsize(fileName) > 4096
+            os.utime(file_name, (lastmod, lastmod))
+        return os.path.getsize(file_name) > 4096
+
+    def is_binary(self, urlresponse):
+        try:
+            return not 'text/html' in urlresponse.headers['Content-Type']
+        except:
+            return True
+
+    def process_redirect_page(self, info, response):
+        global ERRORS_ENCOUNTERED
+        if self.is_binary(response):
+            # looks like the redirect page is an actual image
+            info.path = info.redirect
+            info.data = response.read()
+            info.override = info.subtitle
+        elif info.plugin:
+            jpegs = run_match(info.plugin.direct,response.read().decode('utf-8'))
+            if not jpegs:
+                ERRORS_ENCOUNTERED = True
+                print("No links found at redirect page: " + info.redirect)
+            elif len(jpegs) == 1 and not info.path:
+                (info.path,info.subtitle) = safe_unpack(jpegs[0],info.subtitle)
+            else:
+                # redirect has multiple links, put them in their own subfolders
+                for idx, path in enumerate(jpegs):
+                    (path,subtitle) = safe_unpack(path,info.subtitle)
+                    path = safe_url(info.redirect, path)
+                    add_job(plugin=info.plugin, path=path, dest=os.path.join(info.dest,subtitle), index=idx+1)
 
     def run_internal(self):
-        global QUEUE, STANDBY, MAX_ATTEMPTS
+        global QUEUE, STANDBY, MAX_ATTEMPTS, ERRORS_ENCOUNTERED
         while STANDBY or not QUEUE.empty():
             try:
                 info = QUEUE.get(False)
@@ -242,34 +296,21 @@ class ImgThread(threading.Thread):
                     response = urlopen_safe(info.redirect)
                 except:
                     print("WARNING: Failed to open redirect " + info.redirect)
+                    ERRORS_ENCOUNTERED = True
                     continue
-                if is_binary(response):
-                    # looks like the redirect page is an actual image
-                    info.path = info.redirect
-                    info.data = response.read()
-                    info.override = info.subtitle
-                elif info.plugin:
-                    jpegs = run_match(info.plugin.direct,response.read().decode('utf-8'))
-                    if not jpegs:
-                        print("No links found at redirect page!  Check regex.  Redirect URL:")
-                        print(info.redirect)
-                    elif len(jpegs) == 1 and not info.path:
-                        (info.path,info.subtitle) = safe_unpack(jpegs[0],info.subtitle)
-                    else:
-                        # redirect has multiple links, put them in their own subfolders
-                        for idx, path in enumerate(jpegs):
-                            (path,subtitle) = safe_unpack(path,info.subtitle)
-                            path = safeurl(info.redirect, path)
-                            add_job(plugin=info.plugin, path=path, dest=os.path.join(info.dest,subtitle), index=idx+1)
+                self.process_redirect_page(info, response)
+
             if info.path:
-                info.path = safeurl(info.redirect, info.path)
-                while not self.copyImage(info):
+                info.path = safe_url(info.redirect, info.path)
+                while not self.copy_image(info):
                     if info.attempts >= MAX_ATTEMPTS:
-                        print("ERROR: Failed to copy " + info.path)
+                        print("ERROR: Failed to copy %s" % info.path)
+                        ERRORS_ENCOUNTERED = True
                         break
             QUEUE.task_done()
 
     def run(self):
+        global ERRORS_ENCOUNTERED
         try:
             self.run_internal()
         except:
@@ -278,117 +319,126 @@ class ImgThread(threading.Thread):
             print("Using params: %s" % sys.argv)
             print('-'*60 + '\n')
             print(EXCEPTION_NOTICE)
+            ERRORS_ENCOUNTERED = True
             os._exit(1)
 
-def download_image(url, fileNameFull):
-    try:
-        urlBase, fileExtension = os.path.splitext(url)
-        fileName = os.path.abspath(fileNameFull)[:255] + fileExtension #full path must be 260 characters or lower
-        folder = os.path.dirname(fileName)
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        elif os.path.exists(fileName):
-            print("Skipping " + fileName)
-            return folder
-        add_job(path=url, dest=folder, subtitle=fileName)
-        return folder
-    except:
-        print("ERROR: Couldn't open URL: " + myurl)
-        return False
+class GalleryGet(object):
+    def __init__(self, url, folder=DEST_ROOT, useTitleAsFolder=True, allowGenericPlugin=True):
+        self.url = url
+        self.folder = folder.strip()
+        self.title_as_folder = useTitleAsFolder
+        self.allow_generic = allowGenericPlugin # DON'T USE GENERIC PLUGIN FROM REDDIT_GET
 
-def run_internal(myurl, folder=DEST_ROOT, useTitleAsFolder=True, allowGenericPlugin=True):
-    global QUEUE
-    if not myurl:
-        print("Nothing to do!")
-        return False
+    def match_plugin(self, page):
+        plugin = PLUGINS["plugin_generic"]
+        for modname in PLUGINS.keys():
+            if modname == "plugin_generic":
+                continue
+            cur_plugin = PLUGINS[modname]
+            if run_match(cur_plugin.identifier, page):
+                plugin = cur_plugin
+                break
+        if plugin.identifier == "generic":
+            if "access denied" in page.lower():
+                plugin = None 
+        return plugin
 
-    try:
-        page = urlopen_safe(myurl).read().decode('utf-8')
-    except:
-        if folder == DEST_ROOT:
-            return False # failed at root folder, no direct images belong here
+    def get_root_and_subtitle(self, page_title, page):
+        title = run_match(page_title, page, True)
+        (title, subtitle) = safe_unpack(title, "")
+        title = safe_str(title)
+        if not title:
+            title = FALLBACK_TITLE
+        root = ""
+        if self.folder:
+            if self.title_as_folder:
+                root = self.folder
+                subtitle = title
+            else:
+                root = os.path.join(self.folder, title)
         else:
-            # this could be a direct image
-            return download_image(myurl,folder)
+            root = title
+        return (root, subtitle)
 
-    folder = folder.strip()
+    def queue_jobs(self, page, plugin, root, subtitle):
+        global ERRORS_ENCOUNTERED
+        links = []
+        using_redirect = False
 
-    ### FIND MATCHING PLUGIN
-    plugin = match_plugin(page)
-    if plugin == None:
-        print("Couldn't access gallery page! Try saving page(s) locally and use local path instead.")
-        sys.exit(0)
-    elif (not allowGenericPlugin) and (plugin.identifier == "generic"):
-        # DON'T USE GENERIC PLUGIN FROM REDDIT_GET
-        return False
-    else:
-        print("Using %s plugin..." % plugin.debugname)
+        if plugin.redirect:
+            links = run_match(plugin.redirect, page)
+            if links:
+                using_redirect = True
+                for idx, link in enumerate(links):
+                    (link,subtitle) = safe_unpack(link, subtitle)
+                    link = safe_url(self.url, link)
+                    safe_makedirs(root)
+                    add_job(plugin=plugin, redirect=link, dest=root, subtitle=subtitle, index=idx+1)
 
-    ### CREATE FOLDER FROM PAGE TITLE
-    title = run_match(plugin.title, page, True)
-    (title, subtitle) = safe_unpack(title, "")
-    title = safe_str(title)
-    if not title:
-        title = FALLBACK_TITLE
-    root = ""
-    if folder:
-        if useTitleAsFolder:
-            root = folder
-            subtitle = title
-        else:
-            root = os.path.join(folder, title)
-    else:
-        root = title
-
-    ### QUEUE JOBS FOR OPENING LINKS
-    links = []
-    using_redirect = False
-
-    if plugin.redirect:
-        links = run_match(plugin.redirect, page)
-        if links:
-            using_redirect = True
-            for idx, link in enumerate(links):
-                (link,subtitle) = safe_unpack(link, subtitle)
-                link = safeurl(myurl, link)
+        if not using_redirect:
+            links = run_match(plugin.direct, page)
+            if len(links) == 1:
+                # don't create folder for only one file
+                (root, filename) = os.path.split(root)
                 safe_makedirs(root)
-                add_job(plugin=plugin, redirect=link, dest=root, subtitle=subtitle, index=idx+1)
+                add_job(plugin=plugin, path=links[0], dest=root, subtitle=filename)
+            else:
+                safe_makedirs(root)
+                for idx, link in enumerate(links):
+                    (link,subtitle) = safe_unpack(link, subtitle)
+                    link = safe_url(self.url, link)
+                    add_job(plugin=plugin, path=link, dest=root, subtitle=subtitle, index=idx+1)
+        if not links:
+            if self.folder:
+                ERRORS_ENCOUNTERED = True
+                print("No links found at %s, plugin may need updating." % self.url)
+            else:
+                ERRORS_ENCOUNTERED = True
+                print("No links found!  Plugin may need updating.")
+            print("Sites occasionally change their markup.  Check if this tool has an update.")
+            print(" - https://github.com/regosen/gallery_get")
+            print(" - pip install gallery_get --update")
+        return root
 
-    if not using_redirect:
-        links = run_match(plugin.direct, page)
-        if len(links) == 1:
-            # don't create folder for only one file
-            (root, filename) = os.path.split(root)
-            safe_makedirs(root)
-            add_job(plugin=plugin, path=links[0], dest=root, subtitle=filename)
-        else:
-            safe_makedirs(root)
-            for idx, link in enumerate(links):
-                (link,subtitle) = safe_unpack(link, subtitle)
-                link = safeurl(myurl, link)
-                add_job(plugin=plugin, path=link, dest=root, subtitle=subtitle, index=idx+1)
-    if not links:
-        if folder:
-            print("No links found at %s, plugin may need updating." % myurl)
-        else:
-            print("No links found!  Plugin may need updating.")
-        print("Sites occasionally change their markup.  Check if this tool has an update.")
-        print(" - https://github.com/regosen/gallery_get")
-        print(" - pip install gallery_get --update")
-    return root
+    def run(self):
+        global QUEUE
+        if not self.url:
+            print("Nothing to do!")
+            return False
 
+        ### TRY OPENING URL
+        try:
+            page = urlopen_safe(self.url).read().decode('utf-8')
+        except:
+            if (self.folder != DEST_ROOT) and ("." in urlparse(self.url).path):
+                # this could be a direct image
+                return download_image(self.url, self.folder)
+
+            print("Skipping inaccessible link: " + self.url)
+            return False
+
+        ### FIND MATCHING PLUGIN
+        plugin = self.match_plugin(page)
+        if plugin == None:
+            print("Couldn't access gallery page! Try saving page(s) locally and use local path instead.")
+            return False
+        elif (not self.allow_generic) and (plugin.identifier == "generic"):
+            return False
+        else:
+            print("Using %s plugin..." % plugin.debugname)
+
+        ### BEGIN PROCESSING
+        (root, subtitle) = self.get_root_and_subtitle(plugin.title, page)
+        return self.queue_jobs(page, plugin, root, subtitle)
 
 def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True, allowGenericPlugin=True):
-    global DEST_ROOT, PARAMS_DEBUG
+    global DEST_ROOT, PARAMS_DEBUG, ERRORS_ENCOUNTERED
     PARAMS_DEBUG = [myurl, dest, titleAsFolder]
     try:
-        if cacheDest:
-            if dest:
-                safeCacheDestination(dest)
-            elif os.path.exists(DESTPATH_FILE):
-                dest = open(DESTPATH_FILE,"r").read().strip()
+        if cacheDest and dest:
+            safeCacheDestination(dest)
             DEST_ROOT = unicode_safe(dest)
-        root = run_internal(myurl, dest, titleAsFolder, allowGenericPlugin)
+        root = GalleryGet(myurl, dest or DEST_ROOT, titleAsFolder, allowGenericPlugin).run()
         if flushJobs:
             flush_jobs()
         return root
@@ -398,13 +448,17 @@ def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True
         print("Using params: %s" % PARAMS_DEBUG)
         print('-'*60 + '\n')
         print(EXCEPTION_NOTICE)
+        ERRORS_ENCOUNTERED = True
         return False
 
 def run_prompted():
     global DEST_ROOT
     myurl = str_input("Input URL: ").strip()
-    new_dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
-    return run_wrapped(myurl, new_dest if new_dest else DEST_ROOT)
+    if not myurl:
+        print("Nothing to do!")
+        return False
+    dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
+    return run_wrapped(myurl, dest or DEST_ROOT)
 
 def run(myurl="", dest=""):
     if not myurl:
@@ -417,10 +471,9 @@ def safeCacheDestination(dest):
         open(DESTPATH_FILE,"w").write(dest)
     except:
         open(DESTPATH_FILE,"w").write(dest.encode("utf8"))
+
 cur_file = os.path.basename(str(__file__))
 arg_file = sys.argv[0]
-if os.path.exists(DESTPATH_FILE):
-    DEST_ROOT = unicode_safe(open(DESTPATH_FILE,"r").read().strip())
 
 if arg_file and os.path.basename(arg_file) == cur_file:
     ### DIRECT LAUNCH (not import)

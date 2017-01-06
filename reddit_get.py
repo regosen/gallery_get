@@ -17,6 +17,7 @@ import datetime, json
 from gallery_utils import *
 import gallery_plugins
 
+USER_QUERY = "http://www.reddit.com/user/%s/submitted/.json?limit=1000"
 DEST_ROOT = gallery_get.DEST_ROOT
 safe_makedirs(DEST_ROOT)
 
@@ -27,9 +28,6 @@ NON_GALLERY_DOMAINS = [
 "www.reddit.com"
 ]
 
-def reddit_url(user):
-    return "http://www.reddit.com/user/%s/submitted/.json?limit=1000" % user
-
 def is_individual_imgur(url):
     if "/imgur.com/a/" in url:
         return False
@@ -37,88 +35,101 @@ def is_individual_imgur(url):
         return False
     return True
 
-# TODO: use queue or eventlet for launching gallery_get.run_wrapped()
-def run_internal(user, dest):
-    reddit_json_str = ""
-    reddit_json = {}
-    localpath = user + ".json"
-    if os.path.exists(localpath):
-        print("Getting JSON data from local file (%s)" % localpath)
-        reddit_json_str = open(localpath,"r").read().decode('utf-8')
-        reddit_json = json.loads(reddit_json_str)
-    else:
-        print("Requesting JSON data from reddit...")
-        for i in range(5):
-            try:
-                reddit_json_str = urlopen_safe(reddit_url(user)).read().decode('utf-8')
-                reddit_json = json.loads(reddit_json_str)
-            except URLError:
-                break
-            except Exception as e:
-                if hasattr(e, 'code') and e.code == 404:
+class RedditGet(object):
+    def __init__(self, user, dest, flush_jobs=True):
+        self.user = user
+        self.dest = dest
+        self.flush_jobs = flush_jobs
+
+    def get_user_json(self):
+        reddit_json_str = ""
+        reddit_json = {}
+        cache_path = self.user + ".json"
+        query_url = USER_QUERY % self.user
+        if os.path.exists(cache_path):
+            print("Getting JSON data from local file (%s)" % cache_path)
+            reddit_json_str = open(cache_path,"r").read().decode('utf-8')
+            reddit_json = json.loads(reddit_json_str)
+        else:
+            print("Requesting JSON data from reddit...")
+            for i in range(5):
+                try:
+                    reddit_json_str = urlopen_safe(query_url).read().decode('utf-8')
+                    reddit_json = json.loads(reddit_json_str)
+                except URLError:
                     break
-            if "data" in reddit_json:
-                break
-            else:
-                time.sleep(2) # workaround for server-side request frequency issues
+                except Exception as e:
+                    if hasattr(e, 'code') and e.code == 404:
+                        break
+                if "data" in reddit_json:
+                    break
+                else:
+                    time.sleep(2) # workaround for server-side request frequency issues
 
-    if not "data" in reddit_json:
-        print("ERROR getting json data after several retries!  Does the user exist?")
-        print("If so, try saving the contents of the following to %s and try again." % localpath)
-        print(reddit_url(user))
-    else:
-        visited_links = set()
-        num_valid_posts = 0
-        for post in reddit_json['data']['children']:
-            url = post['data']['url']
-            domain = urlparse(url).netloc.lower()
-            if any(x in domain for x in NON_GALLERY_DOMAINS):
-                print("Skipping non-gallery link: " + url)
-                continue
-            elif url.lower() in visited_links:
-                print("Skipping already visited link: " + url)
-                continue
-            else:
-                visited_links.add(url.lower())
+        if not "data" in reddit_json:
+            print("ERROR getting json data after several retries!  Does the user exist?")
+            print("If so, try saving the contents of the following to %s and try again." % cache_path)
+            print(query_url)
+        return reddit_json
 
-            cdate = post['data']['created']
-            sdate = datetime.datetime.fromtimestamp(cdate).strftime("%Y-%m-%d")
-            title = post['data']['title'].replace('/', '_').replace('\\', '_').strip()
-            if title:
-                title = " - " + title
+    def folder_from_post(self, data):
+        sdate = datetime.datetime.fromtimestamp(data['created']).strftime("%Y-%m-%d")
+        title = data['title'].replace('/', '_').replace('\\', '_').strip()
+        if title:
+            title = " - " + title
 
-            folder = os.path.join(unicode_safe(dest), user, gallery_get.safe_str(sdate + title))
-            
-            # special shortcuts for skipping the redirect
-            if "/i.reddituploads.com/" in url:
-                gallery_get.download_image(url + ".jpg", folder)
-            elif "/imgur.com/" in url and is_individual_imgur(url):
-                # Create direct image URL with dummy extension (otherwise it will redirect)
-                # Then get correct extension from header
-                img_base = url.replace("/imgur.com/","/i.imgur.com/")
-                ext = "jpg"
-                file = urlopen_safe("%s.%s" % (img_base, ext))
-                real_ext = file.headers.get("content-type")[6:]
-                if real_ext != "jpeg": # jpeg -> jpg
-                    ext = real_ext
-                gallery_get.download_image("%s.%s" % (img_base, ext), folder)
-            elif "/i.imgur.com/" in url:
-                gallery_get.download_image(url, folder)
-            else:
-                gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False, allowGenericPlugin=False)
+        return os.path.join(unicode_safe(self.dest), self.user, gallery_get.safe_str(sdate + title))
 
-        gallery_get.flush_jobs()
-        print("Done!")
+    # includes special shortcuts for skipping the redirect
+    def process_reddit_post(self, url, folder):
+        if "/i.reddituploads.com/" in url:
+            gallery_get.download_image(url + ".jpg", folder)
+        elif "/imgur.com/" in url and is_individual_imgur(url):
+            # Create direct image URL with dummy extension (otherwise it will redirect)
+            # Then get correct extension from header
+            img_base = url.replace("/imgur.com/","/i.imgur.com/")
+            ext = "jpg"
+            file = urlopen_safe("%s.%s" % (img_base, ext))
+            real_ext = file.headers.get("content-type")[6:]
+            if real_ext != "jpeg": # jpeg -> jpg
+                ext = real_ext
+            gallery_get.download_image("%s.%s" % (img_base, ext), folder)
+        elif "/i.imgur.com/" in url:
+            gallery_get.download_image(url, folder)
+        else:
+            # TODO: use Queue or eventlet for launching gallery_get.run_wrapped()
+            gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False, allowGenericPlugin=False)
 
-def run_wrapped(user, dest=""):
+    def run(self):
+        reddit_json = self.get_user_json()
+
+        if "data" in reddit_json:
+            visited_links = set()
+            num_valid_posts = 0
+            for post in reddit_json['data']['children']:
+                data = post['data']
+                url = data['url']
+                domain = urlparse(url).netloc.lower()
+                if any(x in domain for x in NON_GALLERY_DOMAINS):
+                    print("Skipping non-gallery link: " + url)
+                    continue
+                elif url.lower() in visited_links:
+                    print("Skipping already visited link: " + url)
+                    continue
+                else:
+                    visited_links.add(url.lower())
+
+                self.process_reddit_post(url, self.folder_from_post(data))
+        if self.flush_jobs:
+            gallery_get.flush_jobs()
+
+def run_wrapped(user, dest="", flush_jobs=True):
     global DEST_ROOT
     try:
         if dest:
             gallery_get.safeCacheDestination(dest)
-        elif os.path.exists(gallery_get.DESTPATH_FILE):
-            dest = open(gallery_get.DESTPATH_FILE,"r").read().strip()
-        DEST_ROOT = unicode_safe(dest)
-        run_internal(user, dest)
+            DEST_ROOT = unicode_safe(dest)
+        RedditGet(user, dest or DEST_ROOT, flush_jobs).run()
     except:
         print('\n' + '-'*60)
         traceback.print_exc(file=sys.stdout)
@@ -132,8 +143,10 @@ def run_prompted():
     if not user:
         print("Nothing to do!")
         sys.exit()
-    new_dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
-    run_wrapped(user, new_dest)
+    dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
+    if dest:
+        gallery_get.safeCacheDestination(dest)
+    RedditGet(user, dest or DEST_ROOT).run()
 
 def run(user="", dest=""):
     if not user:
