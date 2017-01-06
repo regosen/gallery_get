@@ -15,16 +15,17 @@ DEFAULT_PLUGIN = None
 FALLBACK_TITLE = "Untitled Gallery"
 
 class Plugin(object):
-    def __init__(self, identifier):
+    def __init__(self, debugname, identifier):
+        self.debugname = debugname
         self.identifier = identifier
         self.redirect = DEFAULT_REDIRECT
         self.direct = DEFAULT_DIRECT_LINKS
         self.title = DEFAULT_TITLE
         self.useFilename = DEFAULT_USE_FILENAME
 
-def register_plugin(modname, identifier):
+def register_plugin(modname, debugname, identifier):
     if not modname in PLUGINS:
-        PLUGINS[modname] = Plugin(identifier)
+        PLUGINS[modname] = Plugin(debugname, identifier)
 
 def register_title(modname, title):
     PLUGINS[modname].title = title
@@ -41,17 +42,19 @@ def register_usefile(modname, useFile):
 # import all python files starting with "plugin_"
 directory = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, directory)
+plugin_prefix = "plugin_"
 for file in os.listdir(directory):
     filelower = file.lower()
-    if filelower.startswith("plugin_") and filelower.endswith(".py"):
+    if filelower.startswith(plugin_prefix) and filelower.endswith(".py"):
         f, e = os.path.splitext(file)
         try:
             mod = __import__(f)
             locals = dir(mod)
             name = mod.__name__
+            debugname = name[len(plugin_prefix):] # text after prefix
             if not 'identifier' in locals:
-                mod.identifier = name[7:] # default identifier is the text after plugin.
-            register_plugin(name, mod.identifier)
+                mod.identifier = debugname
+            register_plugin(name, debugname, mod.identifier)
             if 'title' in locals: register_title(name, mod.title)
             if 'redirect' in locals: register_redirect(name, mod.redirect)
             if 'direct_links' in locals: register_links(name, mod.direct_links)

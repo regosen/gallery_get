@@ -14,150 +14,139 @@ import gallery_get
 import os, time, sys, traceback
 import datetime, json
 
-# Python 3 imports that throw in Python 2
-try:
-    from urllib.request import Request, urlopen
-except:
-    # This is Python 2
-    from urllib2 import Request, urlopen
+from gallery_utils import *
+import gallery_plugins
 
-# some galleries reject requests if they're not coming from a browser- this is to get past that.
-def urlopen_safe(url):
-    q = Request(url)
-    q.add_header('User-Agent', 'Mozilla/5.0')
-    return urlopen(q)
-
+USER_QUERY = "http://www.reddit.com/user/%s/submitted/.json?limit=1000"
 DEST_ROOT = gallery_get.DEST_ROOT
-gallery_get.PLUGIN = gallery_get.gallery_plugins.PLUGINS["plugin_imgur_album"]
+safe_makedirs(DEST_ROOT)
 
-# Python 2 types that throw in Python 3
-try:
-    str_input = raw_input
-except:
-    # This is Python 3
-    str_input = input
+# To speed this up, don't craw links with pages that we know aren't galleries
+NON_GALLERY_DOMAINS = [
+"youtube.com",
+"youtu.be",
+"www.reddit.com"
+]
 
-def reddit_url(user):
-    return "http://www.reddit.com/user/%s/submitted/.json?limit=1000" % user
+def is_individual_imgur(url):
+    if "/imgur.com/a/" in url:
+        return False
+    if "/imgur.com/gallery/" in url:
+        return False
+    return True
 
-def download_image(url, fileNameFull):
-    urlBase, fileExtension = os.path.splitext(url)
-    fileName = os.path.abspath(fileNameFull)[:255] + fileExtension #full path must be 260 characters or lower
-    folder = os.path.dirname(fileName)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-    elif os.path.exists(fileName):
-        print("Skipping " + fileName)
-        return
-    gallery_get.add_job(path=url, dest=folder, subtitle=fileName)
+class RedditGet(object):
+    def __init__(self, user, dest, flush_jobs=True):
+        self.user = user
+        self.dest = dest
+        self.flush_jobs = flush_jobs
 
-def run_internal(user, dest):
-    reddit_json_str = ""
-    reddit_json = {}
-    localpath = user + ".json"
-    if os.path.exists(localpath):
-        print("Getting JSON data from local file (%s)" % localpath)
-        reddit_json_str = open(localpath,"r").read().decode('utf-8')
-        reddit_json = json.loads(reddit_json_str)
-    else:
-        print("Requesting JSON data from reddit...")
-        for i in range(5):
-            try:
-                reddit_json_str = urlopen_safe(reddit_url(user)).read().decode('utf-8')
-                reddit_json = json.loads(reddit_json_str)
-            except Exception as e:
-                if e.code == 404:
+    def get_user_json(self):
+        reddit_json_str = ""
+        reddit_json = {}
+        cache_path = self.user + ".json"
+        query_url = USER_QUERY % self.user
+        if os.path.exists(cache_path):
+            print("Getting JSON data from local file (%s)" % cache_path)
+            reddit_json_str = open(cache_path,"r").read().decode('utf-8')
+            reddit_json = json.loads(reddit_json_str)
+        else:
+            print("Requesting JSON data from reddit...")
+            for i in range(5):
+                try:
+                    reddit_json_str = urlopen_safe(query_url).read().decode('utf-8')
+                    reddit_json = json.loads(reddit_json_str)
+                except URLError:
                     break
-            if "data" in reddit_json:
-                break
-            else:
-                time.sleep(2) # workaround for server-side request frequency issues
+                except Exception as e:
+                    if hasattr(e, 'code') and e.code == 404:
+                        break
+                if "data" in reddit_json:
+                    break
+                else:
+                    time.sleep(2) # workaround for server-side request frequency issues
 
-    if not "data" in reddit_json:
-        print("ERROR getting json data after several retries!  Does the user exist?")
-        print("If so, try saving the contents of the following to %s and try again." % localpath)
-        print(reddit_url(user))
-    else:
-        visited_links = set()
-        num_valid_posts = 0
-        for post in reddit_json['data']['children']:
-            url = post['data']['url']
+        if not "data" in reddit_json:
+            print("ERROR getting json data after several retries!  Does the user exist?")
+            print("If so, try saving the contents of the following to %s and try again." % cache_path)
+            print(query_url)
+        return reddit_json
 
-            if url.lower() in visited_links:
-                print("Skipping already visited link: " + url)
-                continue
-            else:
-                visited_links.add(url.lower())
+    def folder_from_post(self, data):
+        sdate = datetime.datetime.fromtimestamp(data['created']).strftime("%Y-%m-%d")
+        title = data['title'].replace('/', '_').replace('\\', '_').strip()
+        if title:
+            title = " - " + title
 
-            cdate = post['data']['created']
-            sdate = datetime.datetime.fromtimestamp(cdate).strftime("%Y-%m-%d")
-            title = post['data']['title'].replace('/', '_').replace('\\', '_').strip()
-            if title:
-                title = " - " + title
+        return os.path.join(unicode_safe(self.dest), self.user, gallery_get.safe_str(sdate + title))
 
-            folder = os.path.join(gallery_get.unicode_safe(dest), user, gallery_get.safestr(sdate + title))
+    # includes special shortcuts for skipping the redirect
+    def process_reddit_post(self, url, folder):
+        if "/i.reddituploads.com/" in url:
+            gallery_get.download_image(url + ".jpg", folder)
+        elif "/imgur.com/" in url and is_individual_imgur(url):
+            # Create direct image URL with dummy extension (otherwise it will redirect)
+            # Then get correct extension from header
+            img_base = url.replace("/imgur.com/","/i.imgur.com/")
+            ext = "jpg"
+            file = urlopen_safe("%s.%s" % (img_base, ext))
+            real_ext = file.headers.get("content-type")[6:]
+            if real_ext != "jpeg": # jpeg -> jpg
+                ext = real_ext
+            gallery_get.download_image("%s.%s" % (img_base, ext), folder)
+        elif "/i.imgur.com/" in url:
+            gallery_get.download_image(url, folder)
+        else:
+            # TODO: use Queue or eventlet for launching gallery_get.run_wrapped()
+            gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False, allowGenericPlugin=False)
 
-            #TODO: let gallery_get handle these links instead of duplicating logic here
-            if "/i.imgur.com/" in url:
-                download_image(url, folder)
-            elif "/imgur.com/a/" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif "/imgur.com/gallery/" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif "/imgur.com/" in url:
-                # Create direct image URL with dummy extension (otherwise it will redirect)
-                # Then get correct extension from header
-                # (This is way faster than opening the redirect)
-                img_base = url.replace("/imgur.com/","/i.imgur.com/")
-                ext = "jpg"
-                file = urlopen_safe("%s.%s" % (img_base, ext))
-                real_ext = file.headers.get("content-type")[6:]
-                if real_ext != "jpeg": # jpeg -> jpg
-                    ext = real_ext
-                download_image("%s.%s" % (img_base, ext), folder)
-            elif "/gfycat.com/" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif "/i.reddituploads.com/" in url:
-                download_image(url + ".jpg", folder)
-            elif "vidble.com/album" in url:
-                if not gallery_get.run_wrapped(url, folder, titleAsFolder=True, cacheDest=False, flushJobs=False):
-                    return False
-            elif url.endswith(".jpg") or url.endswith(".jpeg") or url.endswith(".gif"):
-                download_image(url, folder)
-            else:
-                continue
-            num_valid_posts += 1
+    def run(self):
+        reddit_json = self.get_user_json()
 
-        gallery_get.flush_jobs()
-        if num_valid_posts == 0:
-            print("\nApparently this user hasn't submitted any imgur links.  Nothing to do.")
+        if "data" in reddit_json:
+            visited_links = set()
+            num_valid_posts = 0
+            for post in reddit_json['data']['children']:
+                data = post['data']
+                url = data['url']
+                domain = urlparse(url).netloc.lower()
+                if any(x in domain for x in NON_GALLERY_DOMAINS):
+                    print("Skipping non-gallery link: " + url)
+                    continue
+                elif url.lower() in visited_links:
+                    print("Skipping already visited link: " + url)
+                    continue
+                else:
+                    visited_links.add(url.lower())
 
-def run_wrapped(user, dest=""):
+                self.process_reddit_post(url, self.folder_from_post(data))
+        if self.flush_jobs:
+            gallery_get.flush_jobs()
+
+def run_wrapped(user, dest="", flush_jobs=True):
     global DEST_ROOT
     try:
         if dest:
             gallery_get.safeCacheDestination(dest)
-        elif os.path.exists(gallery_get.DESTPATH_FILE):
-            dest = open(gallery_get.DESTPATH_FILE,"r").read().strip()
-        DEST_ROOT = gallery_get.unicode_safe(dest)
-        run_internal(user, dest)
+            DEST_ROOT = unicode_safe(dest)
+        RedditGet(user, dest or DEST_ROOT, flush_jobs).run()
     except:
         print('\n' + '-'*60)
         traceback.print_exc(file=sys.stdout)
         print("Using params: [%s, %s]" % (user, dest))
         print('-'*60 + '\n')
         print(gallery_get.EXCEPTION_NOTICE)
+    return os.path.join(DEST_ROOT, user)
 
 def run_prompted():
     user = str_input("Input reddit user: ").strip()
     if not user:
         print("Nothing to do!")
         sys.exit()
-    new_dest = str_input("Destination (%s): " % gallery_get.encode_safe(DEST_ROOT)).strip()
-    run_wrapped(user, new_dest)
+    dest = str_input("Destination (%s): " % encode_safe(DEST_ROOT)).strip()
+    if dest:
+        gallery_get.safeCacheDestination(dest)
+    RedditGet(user, dest or DEST_ROOT).run()
 
 def run(user="", dest=""):
     if not user:
