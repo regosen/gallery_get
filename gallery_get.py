@@ -269,7 +269,7 @@ class ImgThread(threading.Thread):
             info.data = response.read()
             info.override = info.subtitle
         elif info.plugin:
-            jpegs = run_match(info.plugin.direct,response.read().decode('utf-8'))
+            jpegs = run_match(info.plugin.direct,unicode_safe(response.read()))
             if not jpegs:
                 ERRORS_ENCOUNTERED = True
                 print("No links found at redirect page: " + info.redirect)
@@ -408,6 +408,7 @@ class GalleryGet(object):
 
         ### TRY OPENING URL
         try:
+            # Don't use urlopen_text here.  We want to capture when the data is in bytes, and treat as image
             page = urlopen_safe(self.url).read().decode('utf-8')
         except:
             if (self.folder != DEST_ROOT) and ("." in urlparse(self.url).path):
