@@ -18,27 +18,6 @@ except:
     str_input = input
     str_type = str
 
-# Python 2<>3 compatibility methods
-def unicode_safe(str):
-    try:
-        str = str.decode("utf8")
-    except:
-        pass
-    return str
-
-def encode_safe(in_str):
-    try:
-        if isinstance(in_str,unicode):
-            in_str = in_str.encode("utf8")
-    except:
-        pass
-    return in_str
-
-def is_str(obj):
-    return isinstance(obj, str_type)
-
-def is_iterable(obj):
-    return hasattr(obj, '__iter__') and not is_str(obj)
 
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
 def urlopen_safe(url):
@@ -49,3 +28,30 @@ def urlopen_safe(url):
 def safe_makedirs(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
+
+
+# Python 2<>3 compatibility methods
+def encode_safe(in_str):
+    try:
+        if isinstance(in_str,unicode):
+            in_str = in_str.encode("utf8")
+    except:
+        pass
+    return in_str
+
+def unicode_safe(str):
+    try:
+        str = str.decode("utf8")
+    except:
+        pass
+    return str
+
+def urlopen_text(url):
+    return unicode_safe(urlopen_safe(url).read())
+    
+def is_str(obj):
+    return isinstance(obj, str_type)
+
+def is_iterable(obj):
+    return hasattr(obj, '__iter__') and not is_str(obj)
+

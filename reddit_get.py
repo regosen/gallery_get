@@ -48,13 +48,13 @@ class RedditGet(object):
         query_url = USER_QUERY % self.user
         if os.path.exists(cache_path):
             print("Getting JSON data from local file (%s)" % cache_path)
-            reddit_json_str = open(cache_path,"r").read().decode('utf-8')
+            reddit_json_str = unicode_safe(open(cache_path,"r").read())
             reddit_json = json.loads(reddit_json_str)
         else:
             print("Requesting JSON data from reddit...")
             for i in range(5):
                 try:
-                    reddit_json_str = urlopen_safe(query_url).read().decode('utf-8')
+                    reddit_json_str = urlopen_text(query_url)
                     reddit_json = json.loads(reddit_json_str)
                 except URLError:
                     break
