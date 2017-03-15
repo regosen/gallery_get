@@ -15,7 +15,7 @@ title = r'<span class="subject">(.*?)</span>'
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 # this can optionally return a hash of input paths to output filenames 
 def redirect(source):
-    matcher = re.compile(r'File: <a .+? href=\"(.*?\.4(?:cdn|chan).org/.*?)/([0-9]*)\.((?:jpg|jpeg|png|gif))\"', re.I)
+    matcher = re.compile(r'File: <a .+?href=\"(.*?\.4(?:cdn|chan).org/.*?)/([0-9]*)\.((?:jpg|jpeg|png|gif))\"', re.I)
     links = matcher.findall(source)
     # prepend 4chan's hash to destination file (to avoid naming conflicts)
     links = map(lambda x: ('http:%s/%s.%s' % (x[0], x[1], x[2]), '%s.%s' % (x[1], x[2])), links)
