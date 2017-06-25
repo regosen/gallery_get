@@ -26,6 +26,7 @@ Gallery Plugins:
 * gfycat
 * xHamster
 * fuskator
+* eroshare
 * vidble
 
 Generic Plugin works for:
