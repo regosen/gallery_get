@@ -13,10 +13,11 @@ import re
 title = r'<title>(.*?) - xHamster.com</title>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
-redirect = r"href='(\S+)' title="
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
-direct_links = r"src='(\S+)' align='center'"
+def direct_links(source):
+    links = re.findall(r'"imageURL":"(\S+?)"',source)
+    return map(lambda x: x.replace("\/", "/"), links)
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
 same_filename = True
