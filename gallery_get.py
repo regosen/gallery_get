@@ -415,7 +415,7 @@ class GalleryGet(object):
                 # this could be a direct image
                 return download_image(self.url, self.folder)
 
-            print("Skipping inaccessible link: " + self.url)
+            print("Skipping inaccessible link (try again, it may take a few retries): " + self.url)
             return False
 
         ### FIND MATCHING PLUGIN
