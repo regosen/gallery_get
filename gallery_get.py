@@ -146,7 +146,7 @@ class JobInfo(object):
         if self.override:
             basename = self.override
         elif self.plugin and self.plugin.useFilename:
-            basename = os.path.basename(self.path).split("?")[0]
+            basename = unquote(os.path.basename(self.path).split("?")[0])
         elif not basename or basename == FALLBACK_TITLE:
             basename = indexstr
         elif self.index > 0:

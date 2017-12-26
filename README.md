@@ -27,6 +27,7 @@ Gallery Plugins:
 * xHamster
 * Pornhub (non-gallery, see plugin file for expected URL)
 * xVideos (non-gallery, see plugin file for expected URL)
+* shimmie
 * fuskator
 * eroshare
 * vidble
