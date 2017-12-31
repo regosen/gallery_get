@@ -13,6 +13,22 @@ import re
 title = r'<title>(.*?) - xHamster.com</title>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
+def redirect(source):
+    redirects = re.findall(r'property="og:url" content="(\S+?)"', source)
+    indexed_source = source
+    while True:
+        next_url = re.findall(r'rel="next" href="(\S+?)"', indexed_source)
+        if next_url:
+          indexed_page = next_url[0]
+          redirects.append(indexed_page)
+          print("Crawling " + indexed_page)
+          try:
+            indexed_source = urlopen_text(indexed_page)
+          except:
+            break
+        else:
+          break
+    return redirects
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 def direct_links(source):
