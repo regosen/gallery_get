@@ -18,26 +18,27 @@ Platforms, Python Versions:
 
 Gallery Plugins:
 
-* imgur (albums and galleries)
-* imgbox
-* imagevenue
-* imagefap
 * 4chan
-* gfycat
-* xHamster
-* Pornhub (albums and single videos)
-* xVideos
-* shimmie
-* fuskator
 * eroshare
+* fuskator
+* gfycat
+* gogoimage
+* imagefap
+* imagevenue
+* imgbox
+* imgur (albums and galleries)
+* Pornhub (albums and single videos)
+* shimmie
 * vidble
+* xHamster
+* xVideos
 
 Generic Plugin works for:
 
-* setsdb.org
 * alafoto.com
 * forum.phun.org
-* more
+* setsdb.org
+* (more)
 
 ## Installation
 
