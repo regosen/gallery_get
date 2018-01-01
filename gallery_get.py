@@ -269,7 +269,13 @@ class ImgThread(threading.Thread):
             info.data = response.read()
             info.override = info.subtitle
         elif info.plugin:
-            jpegs = run_match(info.plugin.direct,unicode_safe(response.read()))
+            try:
+                source = response.read()
+            except:
+                ERRORS_ENCOUNTERED = True
+                print("Error encountered reading redirect page: " + info.redirect)
+                return
+            jpegs = run_match(info.plugin.direct,unicode_safe(source))
             if not jpegs:
                 ERRORS_ENCOUNTERED = True
                 print("No links found at redirect page: " + info.redirect)
