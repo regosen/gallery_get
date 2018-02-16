@@ -82,7 +82,9 @@ def safe_url(parent, link):
 
 def run_match(match, source, singleItem=False):
     result = []
-    if match:
+    if not is_str(source):
+        result = [source]
+    elif match:
         if is_str(match):
             rematch = re.compile(match, re.I)
             # support for grouped matches
