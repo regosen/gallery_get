@@ -427,7 +427,7 @@ class GalleryGet(object):
             return False
 
         ### FIND MATCHING PLUGIN
-        plugin = self.match_plugin(page)
+        plugin = self.match_plugin(self.url)
         if plugin == None:
             print("Couldn't access gallery page! Try saving page(s) locally and use local path instead.")
             return False
