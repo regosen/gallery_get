@@ -1,3 +1,5 @@
+# NOTE: For Pornhub use the direct link, which should look something like this: "https://www.pornhub.com/view_video.php?viewkey=blahblahblah"
+
 # Plugin for gallery_get.
 import re
 
@@ -8,25 +10,21 @@ import re
 # If you comment out a parameter, it will use the default defined in __init__.py
 
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
+identifier = "pornhub.com/view_video"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'<span class="subject">(.*?)</span>'
+title = r'property="og:title" content="(.+?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
-# this can optionally return a hash of input paths to output filenames 
-def redirect(source):
-    matcher = re.compile(r'File: <a .+?href=\"(.*?\.4(?:cdn|chan).org/.*?)/([0-9]*)\.((?:jpg|jpeg|png|gif|webm))\"', re.I)
-    links = matcher.findall(source)
-    # prepend 4chan's hash to destination file (to avoid naming conflicts)
-    links = map(lambda x: ('http:%s/%s.%s' % (x[0], x[1], x[2]), '%s.%s' % (x[1], x[2])), links)
-    return links
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 def direct_links(source):
-    matcher = re.compile(r'src=[\"\'](.+?\.(?:jpg|jpeg|png|gif))[\"\']',re.I)
-    links = matcher.findall(source)
-    links = filter(lambda x: not "thumb" in x.lower(), links) # exclude thumbnails
-    return links
+    links = re.findall(r'"videoUrl":"(\S+?)"',source)
+    if links:
+      return map(lambda x: x.replace("\/", "/"), links)[0] # highest-quality video is listed first
+    else:
+      return nil
 
-# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
-same_filename = True
+# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
+same_filename = False
+

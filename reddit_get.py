@@ -17,7 +17,7 @@ import datetime, json
 from gallery_utils import *
 import gallery_plugins
 
-USER_QUERY = "http://www.reddit.com/user/%s/submitted/.json?limit=1000"
+USER_QUERY = "https://www.reddit.com/user/%s/submitted/.json?limit=1000"
 DEST_ROOT = gallery_get.DEST_ROOT
 safe_makedirs(DEST_ROOT)
 

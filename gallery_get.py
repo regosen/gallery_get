@@ -82,7 +82,9 @@ def safe_url(parent, link):
 
 def run_match(match, source, singleItem=False):
     result = []
-    if match:
+    if not is_str(source):
+        result = [source]
+    elif match:
         if is_str(match):
             rematch = re.compile(match, re.I)
             # support for grouped matches
@@ -146,7 +148,7 @@ class JobInfo(object):
         if self.override:
             basename = self.override
         elif self.plugin and self.plugin.useFilename:
-            basename = os.path.basename(self.path).split("?")[0]
+            basename = unquote(os.path.basename(self.path).split("?")[0])
         elif not basename or basename == FALLBACK_TITLE:
             basename = indexstr
         elif self.index > 0:
@@ -269,7 +271,13 @@ class ImgThread(threading.Thread):
             info.data = response.read()
             info.override = info.subtitle
         elif info.plugin:
-            jpegs = run_match(info.plugin.direct,unicode_safe(response.read()))
+            try:
+                source = response.read()
+            except:
+                ERRORS_ENCOUNTERED = True
+                print("Error encountered reading redirect page: " + info.redirect)
+                return
+            jpegs = run_match(info.plugin.direct,unicode_safe(source))
             if not jpegs:
                 ERRORS_ENCOUNTERED = True
                 print("No links found at redirect page: " + info.redirect)
@@ -419,7 +427,7 @@ class GalleryGet(object):
             return False
 
         ### FIND MATCHING PLUGIN
-        plugin = self.match_plugin(page)
+        plugin = self.match_plugin(self.url)
         if plugin == None:
             print("Couldn't access gallery page! Try saving page(s) locally and use local path instead.")
             return False

@@ -8,7 +8,7 @@ import re
 # If you comment out a parameter, it will use the default defined in __init__.py
 
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
-identifier = "www.vidble.com"
+identifier = "vidble.com"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 title = r'<title>"(.*?)</title>"'
