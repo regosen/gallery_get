@@ -37,6 +37,7 @@ html_parser = HTMLParser.HTMLParser()
 QUEUE = queue.Queue()
 STANDBY = False
 THREADS = []
+MAX_THREADS = 1
 MAX_ATTEMPTS = 10
 ERRORS_ENCOUNTERED = False
 
@@ -180,10 +181,10 @@ class JobInfo(object):
         return success
 
 def start_jobs():
-    global STANDBY, THREADS
+    global STANDBY, THREADS, MAX_THREADS
     if not THREADS:
         STANDBY = True
-        for i in range(multiprocessing.cpu_count()):
+        for i in range(min(multiprocessing.cpu_count(), MAX_THREADS)):
             t = ImgThread()
             t.start()
             THREADS.append(t)
