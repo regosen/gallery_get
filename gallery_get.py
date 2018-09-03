@@ -37,7 +37,7 @@ html_parser = HTMLParser.HTMLParser()
 QUEUE = queue.Queue()
 STANDBY = False
 THREADS = []
-MAX_THREADS = 1
+MAX_THREADS = 10
 MAX_ATTEMPTS = 10
 ERRORS_ENCOUNTERED = False
 
@@ -230,7 +230,7 @@ class ImgThread(threading.Thread):
 
     def copy_image(self, info):
         info.attempts += 1
-        
+
         file_name = info.destination_filename()
         try:
             file_info = urlopen_safe(info.path)
@@ -349,7 +349,7 @@ class GalleryGet(object):
                 break
         if plugin.identifier == "generic":
             if "access denied" in page.lower():
-                plugin = None 
+                plugin = None
         return plugin
 
     def get_root_and_subtitle(self, page_title, page):
