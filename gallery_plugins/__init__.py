@@ -8,6 +8,7 @@ DEFAULT_TITLE = r'<title>(.*?)</title>'
 DEFAULT_REDIRECT = "" # assumes all links are direct links
 DEFAULT_DIRECT_LINKS = r'src=[\"\'](.+?\.jpe?g)[\"\']'
 DEFAULT_USE_FILENAME = False
+DEFAULT_MAX_THREADS = None
 
 import os,sys
 PLUGINS = {}
@@ -22,6 +23,7 @@ class Plugin(object):
         self.direct = DEFAULT_DIRECT_LINKS
         self.title = DEFAULT_TITLE
         self.useFilename = DEFAULT_USE_FILENAME
+        self.max_threads = DEFAULT_MAX_THREADS
 
 def register_plugin(modname, debugname, identifier):
     if not modname in PLUGINS:
@@ -38,6 +40,9 @@ def register_links(modname, direct):
     
 def register_usefile(modname, useFile):
     PLUGINS[modname].useFilename = useFile
+
+def register_max_threads(modname, max_threads):
+    PLUGINS[modname].max_threads = max_threads
 
 # import all python files starting with "plugin_"
 directory = os.path.abspath(os.path.dirname(__file__))
@@ -59,6 +64,7 @@ for file in os.listdir(directory):
             if 'redirect' in locals: register_redirect(name, mod.redirect)
             if 'direct_links' in locals: register_links(name, mod.direct_links)
             if 'same_filename' in locals: register_usefile(name, mod.same_filename)
+            if 'max_threads' in locals: register_max_threads(name, mod.max_threads)
         except ImportError:
             print("Gallery: failed to import")
             print(f, ":", sys.exc_value)

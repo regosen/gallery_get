@@ -179,11 +179,11 @@ class JobInfo(object):
             output.close()
         return success
 
-def start_jobs():
+def start_jobs(max_threads):
     global STANDBY, THREADS
     if not THREADS:
         STANDBY = True
-        for i in range(multiprocessing.cpu_count()):
+        for i in range(max_threads):
             t = ImgThread()
             t.start()
             THREADS.append(t)
@@ -205,7 +205,7 @@ def flush_jobs():
 
 def add_job(plugin=None, subtitle="", path="", redirect="", dest="", index=0):
     global QUEUE
-    start_jobs()
+    start_jobs(plugin.max_threads)
     QUEUE.put(JobInfo(plugin=plugin, subtitle=subtitle, path=path, redirect=redirect, dest=dest, index=index))
 
 
@@ -435,6 +435,12 @@ class GalleryGet(object):
             return False
         else:
             print("Using %s plugin..." % plugin.debugname)
+
+        if plugin.max_threads is not None:
+            plugin.max_threads = min(multiprocessing.cpu_count(), plugin.max_threads)
+        else:
+            plugin.max_threads = multiprocessing.cpu_count()
+        print('Using %d threads' % (plugin.max_threads,))
 
         ### BEGIN PROCESSING
         (root, subtitle) = self.get_root_and_subtitle(plugin.title, page)
