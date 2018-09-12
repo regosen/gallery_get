@@ -114,7 +114,7 @@ def run_match(match, source, singleItem=False):
 def download_image(url, fileNameFull):
     global ERRORS_ENCOUNTERED
     try:
-        urlBase, fileExtension = os.path.splitext(url)
+        urlBase, fileExtension = os.path.splitext(url.split("?")[0])
         fileName = os.path.abspath(fileNameFull)[:255] + fileExtension # full path must be 260 characters or lower
         folder = os.path.dirname(fileName)
         if not os.path.exists(folder):
