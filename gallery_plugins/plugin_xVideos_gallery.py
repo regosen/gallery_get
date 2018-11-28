@@ -1,6 +1,3 @@
-# NOTE: For xVideos use the direct link, which should look something like this: "http://www.xvideos.com/video123456/blah_blah_blah"
-
-
 # Plugin for gallery_get.
 import re
 
@@ -11,16 +8,15 @@ import re
 # If you comment out a parameter, it will use the default defined in __init__.py
 
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
-identifier = "xvideos.com/video"
+identifier = "xvideos.com/.+/photos/"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r"setVideoTitle\('(.+?)'"
+title = r'"title":"(.+?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
-direct_links = r"setVideoUrlHigh\('(\S+?)'"
+direct_links = r'href="(https://img-hw.xvideos.com/videos/profiles/galleries/\S+?)"'
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
-same_filename = False
-
+same_filename = True
