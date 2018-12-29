@@ -20,7 +20,9 @@ def redirect(source):
     cur_url = re.findall(r'link rel="canonical" href="(.+?)"', source)[0].split("?")[0]
     index = 0
     while True:
-        indexed_page = cur_url + "?page=%d" % index
+        indexed_page = cur_url
+        if index != 0:
+            indexed_page += "?page=%d" % index
         print("Crawling " + indexed_page)
         indexed_source = urlopen_text(indexed_page)
         links = re.findall(r'href="(/photo/\d+)"', indexed_source)
