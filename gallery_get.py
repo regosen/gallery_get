@@ -147,7 +147,7 @@ class JobInfo(object):
         basename = self.subtitle
         if self.override:
             basename = self.override
-        elif self.plugin and self.plugin.useFilename:
+        elif self.plugin and self.plugin.use_filename:
             basename = unquote(os.path.basename(self.path).split("?")[0])
         elif not basename or basename == FALLBACK_TITLE:
             basename = indexstr
@@ -337,22 +337,17 @@ class GalleryGet(object):
         self.title_as_folder = useTitleAsFolder
         self.allow_generic = allowGenericPlugin # DON'T USE GENERIC PLUGIN FROM REDDIT_GET
 
-    def match_plugin(self, page):
-        plugin = PLUGINS["plugin_generic"]
+        self.plugin = PLUGINS["plugin_generic"]
         for modname in PLUGINS.keys():
             if modname == "plugin_generic":
                 continue
             cur_plugin = PLUGINS[modname]
-            if run_match(cur_plugin.identifier, page):
-                plugin = cur_plugin
+            if run_match(cur_plugin.identifier, self.url):
+                self.plugin = cur_plugin
                 break
-        if plugin.identifier == "generic":
-            if "access denied" in page.lower():
-                plugin = None 
-        return plugin
 
-    def get_root_and_subtitle(self, page_title, page):
-        title = run_match(page_title, page, True)
+    def get_root_and_subtitle(self, page):
+        title = run_match(self.plugin.title, page, True)
         (title, subtitle) = safe_unpack(title, "")
         title = safe_str(title)
         if not title:
@@ -368,41 +363,41 @@ class GalleryGet(object):
             root = title
         return (root, subtitle)
 
-    def queue_jobs(self, page, plugin, root, subtitle):
+    def queue_jobs(self, page, root, subtitle):
         global ERRORS_ENCOUNTERED
         links = []
         using_redirect = False
 
-        if plugin.redirect:
-            links = run_match(plugin.redirect, page)
+        if self.plugin.redirect:
+            links = run_match(self.plugin.redirect, page)
             if links:
                 using_redirect = True
                 for idx, link in enumerate(links):
                     (link,subtitle) = safe_unpack(link, subtitle)
                     link = safe_url(self.url, link)
                     safe_makedirs(root)
-                    add_job(plugin=plugin, redirect=link, dest=root, subtitle=subtitle, index=idx+1)
+                    add_job(plugin=self.plugin, redirect=link, dest=root, subtitle=subtitle, index=idx+1)
 
         if not using_redirect:
-            links = run_match(plugin.direct, page)
+            links = run_match(self.plugin.direct, page)
             if len(links) == 1:
                 # don't create folder for only one file
                 (root, filename) = os.path.split(root)
                 safe_makedirs(root)
-                add_job(plugin=plugin, path=links[0], dest=root, subtitle=filename)
+                add_job(plugin=self.plugin, path=links[0], dest=root, subtitle=filename)
             else:
                 safe_makedirs(root)
                 for idx, link in enumerate(links):
                     (link,subtitle) = safe_unpack(link, subtitle)
                     link = safe_url(self.url, link)
-                    add_job(plugin=plugin, path=link, dest=root, subtitle=subtitle, index=idx+1)
+                    add_job(plugin=self.plugin, path=link, dest=root, subtitle=subtitle, index=idx+1)
         if not links:
             if self.folder:
                 ERRORS_ENCOUNTERED = True
-                print("No links found at %s, plugin may need updating." % self.url)
+                print("No links found at %s, please check URL and try again." % self.url)
             else:
                 ERRORS_ENCOUNTERED = True
-                print("No links found!  Plugin may need updating.")
+                print("No links found!  Please check URL and try again.")
             print("Sites occasionally change their markup.  Check if this tool has an update.")
             print(" - https://github.com/regosen/gallery_get")
             print(" - pip install gallery_get --update")
@@ -414,10 +409,21 @@ class GalleryGet(object):
             print("Nothing to do!")
             return False
 
+        ### FIND MATCHING PLUGIN (BASED ON URL)
+        if self.plugin == None:
+            print("Couldn't access gallery page! Try saving page(s) locally and use local path instead.")
+            return False
+        elif (not self.allow_generic) and (self.plugin.identifier == "generic"):
+            return False
+        else:
+            print("Using %s plugin..." % self.plugin.debugname)
+
         ### TRY OPENING URL
         try:
             # Don't use urlopen_text here.  We want to capture when the data is in bytes, and treat as image
-            page = urlopen_safe(self.url).read().decode('utf-8')
+            data = urlopen_safe(self.url)
+            time.sleep(self.plugin.page_load_time)
+            page = data.read().decode('utf-8')
         except:
             if (self.folder != DEST_ROOT) and ("." in urlparse(self.url).path):
                 # this could be a direct image
@@ -426,19 +432,9 @@ class GalleryGet(object):
             print("Skipping inaccessible link: " + self.url)
             return False
 
-        ### FIND MATCHING PLUGIN
-        plugin = self.match_plugin(self.url)
-        if plugin == None:
-            print("Couldn't access gallery page! Try saving page(s) locally and use local path instead.")
-            return False
-        elif (not self.allow_generic) and (plugin.identifier == "generic"):
-            return False
-        else:
-            print("Using %s plugin..." % plugin.debugname)
-
         ### BEGIN PROCESSING
-        (root, subtitle) = self.get_root_and_subtitle(plugin.title, page)
-        return self.queue_jobs(page, plugin, root, subtitle)
+        (root, subtitle) = self.get_root_and_subtitle(page)
+        return self.queue_jobs(page, root, subtitle)
 
 def run_wrapped(myurl, dest, titleAsFolder=False, cacheDest=True, flushJobs=True, allowGenericPlugin=True):
     global DEST_ROOT, PARAMS_DEBUG, ERRORS_ENCOUNTERED

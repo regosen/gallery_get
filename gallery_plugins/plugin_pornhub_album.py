@@ -14,27 +14,27 @@ identifier = "pornhub.com/album/"
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 title = r'<title>(.+?)</title>'
 
+# some galleries take time to load before their source can be read
+# this gallery takes an exceptionally long time.  Shortening it can lead to no links found.
+page_load_time = 8
+
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
     redirects = []
-    try:
-        cur_url = re.findall(r'link rel="canonical" href="(.+?)"', source)[0].split("?")[0]
-    except:
-        # gallery_get will already report when no links are found
-        return redirects
-    index = 0
-    while True:
-        indexed_page = cur_url
-        if index != 0:
-            indexed_page += "?page=%d" % index
-        print("Crawling " + indexed_page)
-        indexed_source = urlopen_text(indexed_page)
-        links = re.findall(r'href="(/photo/\d+)"', indexed_source)
-        if links:
-            redirects += map(lambda x: 'https://www.pornhub.com' + x, links)
-            index += 1
-        else:
-            break
+    url_match = re.findall(r'link rel="canonical" href="(.+?)"', source)
+    if url_match:
+        cur_url = url_match[0].split("?")[0]
+        index = 1
+        while True:
+            indexed_page = cur_url + "?page=%d" % index
+            print("Crawling " + indexed_page)
+            indexed_source = urlopen_text(indexed_page, page_load_time)
+            links = re.findall(r'href="(/photo/\d+)"', indexed_source)
+            if links:
+                redirects += map(lambda x: 'https://www.pornhub.com' + x, links)
+                index += 1
+            else:
+                break
     return redirects
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.

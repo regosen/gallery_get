@@ -1,4 +1,4 @@
-import os
+import os, time
 
 # Python 3 imports that throw in Python 2
 try:
@@ -47,8 +47,11 @@ def unicode_safe(str):
         pass
     return str
 
-def urlopen_text(url):
-    return unicode_safe(urlopen_safe(url).read())
+def urlopen_text(url, wait_time = 0):
+    data = urlopen_safe(url)
+    # some galleries need time to finish loading a page
+    time.sleep(wait_time)
+    return unicode_safe(data.read())
     
 def is_str(obj):
     return isinstance(obj, str_type)

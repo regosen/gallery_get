@@ -8,6 +8,7 @@ DEFAULT_TITLE = r'<title>(.*?)</title>'
 DEFAULT_REDIRECT = "" # assumes all links are direct links
 DEFAULT_DIRECT_LINKS = r'src=[\"\'](.+?\.jpe?g)[\"\']'
 DEFAULT_USE_FILENAME = False
+DEFAULT_PAGE_LOAD_TIME = 0
 
 import os,sys
 PLUGINS = {}
@@ -21,23 +22,25 @@ class Plugin(object):
         self.redirect = DEFAULT_REDIRECT
         self.direct = DEFAULT_DIRECT_LINKS
         self.title = DEFAULT_TITLE
-        self.useFilename = DEFAULT_USE_FILENAME
+        self.use_filename = DEFAULT_USE_FILENAME
+        self.page_load_time = DEFAULT_PAGE_LOAD_TIME
 
-def register_plugin(modname, debugname, identifier):
+def register_plugin(mod, modname, debugname):
+    mod_locals = dir(mod)
+    if not 'identifier' in mod_locals:
+        mod.identifier = debugname
     if not modname in PLUGINS:
-        PLUGINS[modname] = Plugin(debugname, identifier)
-
-def register_title(modname, title):
-    PLUGINS[modname].title = title
-    
-def register_redirect(modname, redirect):
-    PLUGINS[modname].redirect = redirect
-    
-def register_links(modname, direct):
-    PLUGINS[modname].direct = direct
-    
-def register_usefile(modname, useFile):
-    PLUGINS[modname].useFilename = useFile
+        PLUGINS[modname] = Plugin(debugname, mod.identifier)
+    if 'title' in mod_locals:
+        PLUGINS[modname].title = mod.title 
+    if 'redirect' in mod_locals:
+        PLUGINS[modname].redirect = mod.redirect 
+    if 'direct_links' in mod_locals:
+        PLUGINS[modname].direct = mod.direct_links 
+    if 'same_filename' in mod_locals:
+        PLUGINS[modname].use_filename = mod.same_filename 
+    if 'page_load_time' in mod_locals:
+        PLUGINS[modname].page_load_time = mod.page_load_time 
 
 # import all python files starting with "plugin_"
 directory = os.path.abspath(os.path.dirname(__file__))
@@ -49,16 +52,10 @@ for file in os.listdir(directory):
         f, e = os.path.splitext(file)
         try:
             mod = __import__(f)
-            locals = dir(mod)
             name = mod.__name__
             debugname = name[len(plugin_prefix):] # text after prefix
-            if not 'identifier' in locals:
-                mod.identifier = debugname
-            register_plugin(name, debugname, mod.identifier)
-            if 'title' in locals: register_title(name, mod.title)
-            if 'redirect' in locals: register_redirect(name, mod.redirect)
-            if 'direct_links' in locals: register_links(name, mod.direct_links)
-            if 'same_filename' in locals: register_usefile(name, mod.same_filename)
+            register_plugin(mod, name, debugname)
+            
         except ImportError:
             print("Gallery: failed to import")
             print(f, ":", sys.exc_value)
