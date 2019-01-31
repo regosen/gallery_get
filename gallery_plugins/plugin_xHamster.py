@@ -1,5 +1,6 @@
 # Plugin for gallery_get.
 import re
+from gallery_utils import urlopen_text
 
 # Each definition can be one of the following:
 # - a string
@@ -14,18 +15,15 @@ title = r'<title>(.*?) - xHamster.com</title>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
-    redirects = re.findall(r'property="og:url" content="(\S+?)"', source)
+    redirects = []
     indexed_source = source
     while True:
-        next_url = re.findall(r'rel="next" href="(\S+?)"', indexed_source)
+        next_url = re.findall(r'data-page="next" href="(\S+?)"', indexed_source)
         if next_url:
           indexed_page = next_url[0]
           redirects.append(indexed_page)
           print("Crawling " + indexed_page)
-          try:
-            indexed_source = urlopen_text(indexed_page)
-          except:
-            break
+          indexed_source = urlopen_text(indexed_page)
         else:
           break
     return redirects
