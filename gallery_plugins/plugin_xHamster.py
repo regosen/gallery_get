@@ -1,5 +1,6 @@
 # Plugin for gallery_get.
 import re
+from gallery_utils import urlopen_text
 
 # Each definition can be one of the following:
 # - a string
@@ -22,10 +23,7 @@ def redirect(source):
           indexed_page = next_url[0]
           redirects.append(indexed_page)
           print("Crawling " + indexed_page)
-          try:
-            indexed_source = urlopen_text(indexed_page)
-          except:
-            break
+          indexed_source = urlopen_text(indexed_page)
         else:
           break
     return redirects
