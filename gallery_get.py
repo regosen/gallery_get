@@ -80,6 +80,15 @@ def safe_url(parent, link):
             link = os.path.dirname(parent) + "/" + link
     return link.replace("&amp;","&")
 
+def find_plugin(url):
+    for modname in PLUGINS.keys():
+        if modname == "plugin_generic":
+            continue
+        cur_plugin = PLUGINS[modname]
+        if run_match(cur_plugin.identifier, url):
+            return cur_plugin
+    return PLUGINS["plugin_generic"]
+
 def run_match(match, source, singleItem=False):
     result = []
     if not is_str(source):
@@ -277,7 +286,9 @@ class ImgThread(threading.Thread):
                 ERRORS_ENCOUNTERED = True
                 print("Error encountered reading redirect page: " + info.redirect)
                 return
-            jpegs = run_match(info.plugin.direct,unicode_safe(source))
+                
+            plugin = find_plugin(info.redirect) if (info.plugin.identifier == "generic") else info.plugin
+            jpegs = run_match(plugin.direct,unicode_safe(source))
             if not jpegs:
                 ERRORS_ENCOUNTERED = True
                 print("No links found at redirect page: " + info.redirect)
@@ -288,7 +299,7 @@ class ImgThread(threading.Thread):
                 for idx, path in enumerate(jpegs):
                     (path,subtitle) = safe_unpack(path,info.subtitle)
                     path = safe_url(info.redirect, path)
-                    add_job(plugin=info.plugin, path=path, dest=os.path.join(info.dest,subtitle), index=idx+1)
+                    add_job(plugin=plugin, path=path, dest=os.path.join(info.dest,subtitle), index=idx+1)
 
     def run_internal(self):
         global QUEUE, STANDBY, MAX_ATTEMPTS, ERRORS_ENCOUNTERED
@@ -336,15 +347,7 @@ class GalleryGet(object):
         self.folder = folder.strip()
         self.title_as_folder = useTitleAsFolder
         self.allow_generic = allowGenericPlugin # DON'T USE GENERIC PLUGIN FROM REDDIT_GET
-
-        self.plugin = PLUGINS["plugin_generic"]
-        for modname in PLUGINS.keys():
-            if modname == "plugin_generic":
-                continue
-            cur_plugin = PLUGINS[modname]
-            if run_match(cur_plugin.identifier, self.url):
-                self.plugin = cur_plugin
-                break
+        self.plugin = find_plugin(self.url)
 
     def get_root_and_subtitle(self, page):
         title = run_match(self.plugin.title, page, True)
