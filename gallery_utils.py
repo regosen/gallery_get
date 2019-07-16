@@ -23,7 +23,7 @@ except:
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
 def urlopen_safe(url):
     q = Request(url)
-    q.add_header('User-Agent', 'Mozilla/5.0')
+    q.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')
     return urlopen(q)
 
 def safe_makedirs(folder):
