@@ -17,8 +17,11 @@ title = r'<title>(.*?)</title>'
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
     redirects = []
-    cur_url = re.findall(r'<a id=\'next_page\' href=\"(.*?)\">Next.*?>', source)[0].split('&')[0]
-    last_page = re.findall(r'<a title=\"Last Page \(\d+\)\" href=\"(.*?)\" >', source)[0].split('page=').pop()
+    cur_url = re.findall(r'<link rel="canonical" href="(.*?)" />', source)[0]
+    try:
+        last_page = re.findall(r'<a title=\"Last Page \(\d+\)\" href=\"(.*?)\" >', source)[0].split('page=').pop()
+    except IndexError:
+        last_page = '0'
     index = 0
     while index <= int(last_page):
         indexed_page = cur_url + "&page=%d" % index
