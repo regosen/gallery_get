@@ -11,7 +11,7 @@ from gallery_utils import urlopen_text
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'<title>(.*?) - xHamster.com</title>'
+title = r'<title>(.*) | xHamster</title>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
