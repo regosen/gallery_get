@@ -69,6 +69,8 @@ def safe_unpack(obj, default):
         return ("","")
 
 def safe_url(parent, link):
+    if not (isinstance(link, str) or isinstance(link, unicode)): 
+        return ""
     if not link.lower().startswith("http"):
         uri=urlparse(parent)
         root = '{uri.scheme}://{uri.netloc}/'.format(uri=uri)
