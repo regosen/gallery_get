@@ -69,7 +69,7 @@ def safe_unpack(obj, default):
         return ("","")
 
 def safe_url(parent, link):
-    if not (isinstance(link, str) or isinstance(link, unicode)): 
+    if not (isinstance(link, unicode) or isinstance(link, str)): 
         return ""
     if not link.lower().startswith("http"):
         uri=urlparse(parent)
