@@ -69,18 +69,20 @@ def safe_unpack(obj, default):
         return ("","")
 
 def safe_url(parent, link):
-    if not (isinstance(link, unicode) or isinstance(link, str)): 
+    try:
+        if not link.lower().startswith("http"):
+            uri=urlparse(parent)
+            root = '{uri.scheme}://{uri.netloc}/'.format(uri=uri)
+            if link.startswith("//"):
+                link = "%s:%s" % (uri.scheme, link)
+            elif link.startswith("/") or root.strip('/').lower() == parent.strip('/').lower():
+                link = root + link
+            else:
+                link = os.path.dirname(parent) + "/" + link
+        return link.replace("&amp;","&")
+    except AttributeError:
         return ""
-    if not link.lower().startswith("http"):
-        uri=urlparse(parent)
-        root = '{uri.scheme}://{uri.netloc}/'.format(uri=uri)
-        if link.startswith("//"):
-            link = "%s:%s" % (uri.scheme, link)
-        elif link.startswith("/") or root.strip('/').lower() == parent.strip('/').lower():
-            link = root + link
-        else:
-            link = os.path.dirname(parent) + "/" + link
-    return link.replace("&amp;","&")
+
 
 def find_plugin(url):
     for modname in PLUGINS.keys():
