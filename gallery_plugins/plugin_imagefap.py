@@ -16,7 +16,10 @@ title = r'<title>(.+?)</title>'
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
     redirects = []
-    cur_url = re.findall(r'href=\'(.+?)\'\>', source)[0].split("?")[0]
+    urls = re.findall(r'href=\'(.+?)\'\>', source)
+    if not urls:
+        return redirects
+    cur_url = urls[0].split("?")[0]
     index = 0
     while True:
         indexed_page = cur_url + "?page=%d" % index
