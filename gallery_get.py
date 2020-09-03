@@ -20,19 +20,19 @@ import re
 # Python 3 imports that throw in Python 2
 try:
     import queue
-    import html.parser as HTMLParser
+    from html import unescape
 except ImportError:
     # This is Python 2
     import Queue as queue
     import HTMLParser
+    html_parser = HTMLParser.HTMLParser()
+    unescape = html_parser.unescape
 
 import threading
 from gallery_utils import *
 from gallery_plugins import *
 import multiprocessing
 import calendar
-
-html_parser = HTMLParser.HTMLParser()
 
 QUEUE = queue.Queue()
 STANDBY = False
@@ -57,7 +57,7 @@ PARAMS = []
 def safe_str(name):
     name = name.replace(":",";") # to preserve emoticons
     name = "".join(i for i in name if ord(i)<128)
-    name = html_parser.unescape(name)
+    name = unescape(name)
     return re.sub(r"[\/\\\*\?\"\<\>\|]", "", name).strip().rstrip(".")
 
 def safe_unpack(obj, default):
@@ -182,7 +182,8 @@ class JobInfo(object):
         try:
             if not self.data:
                 self.data = file_info.read()
-        except:
+        except Exception as error:
+            print(error)
             success = False
 
         file_info.close()
@@ -246,7 +247,8 @@ class ImgThread(threading.Thread):
         file_name = info.destination_filename()
         try:
             file_info = urlopen_safe(info.path)
-        except:
+        except Exception as error:
+            print(error)
             return False
 
         try:
@@ -431,13 +433,17 @@ class GalleryGet(object):
             data = urlopen_safe(self.url)
             time.sleep(self.plugin.page_load_time)
             page = data.read().decode('utf-8')
-        except:
-            if (self.folder != DEST_ROOT) and ("." in urlparse(self.url).path):
+        except Exception as error:
+            if ("certificate verify failed" in str(error)):
+                print("ERROR: Python doesn't have SSL certificates installed, can't access " + self.url)
+                print("Please run 'Install Certificates.command' from your Python installation directory.")
+                return False
+            elif (self.folder != DEST_ROOT) and ("." in urlparse(self.url).path):
                 # this could be a direct image
                 return download_image(self.url, self.folder)
-
-            print("Skipping inaccessible link: " + self.url)
-            return False
+            else:
+                print("Skipping inaccessible link (%d): %s" % (error.code, self.url))
+                return False
 
         ### BEGIN PROCESSING
         (root, subtitle) = self.get_root_and_subtitle(page)
