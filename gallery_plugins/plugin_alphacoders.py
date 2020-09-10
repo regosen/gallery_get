@@ -31,7 +31,7 @@ def redirect(source):
         if links:
             for link in links:
                 image_page = urlopen_text('https://' + identifier + '/' + link)
-                image_urls = re.findall('<a href="(http[s]?://images\d?\.alphacoders\.com/\d+/\d+\.[jpng]+)"', image_page)
+                image_urls = re.findall('<a href="(http[s]?://images\d?\.alphacoders\.com/\d+/\d+\.[jpeng]+)"', image_page)
                 redirects.append(image_urls[0])
             index += 1
         else:
