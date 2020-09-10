@@ -16,7 +16,7 @@ title = r'<title>(.*?)</title>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
-    redirects = []
+    redirects = list()
     cur_url = re.findall(r'<link rel="canonical" href="(.*?)" />', source)[0]
     try:
         last_page = re.findall(r'<a title=\"Last Page \(\d+\)\" href=\"(.*?)\" >', source)[0].split('page=').pop()
@@ -27,16 +27,19 @@ def redirect(source):
         indexed_page = cur_url + "&page=%d" % index
         print("Crawling " + indexed_page)
         indexed_source = urlopen_text(indexed_page)
-        links = re.findall('<img .*? data-src=\"(.*?)\" alt=\"HD Wallpaper.*?>',indexed_source)
+        links = re.findall('<a href="(big.php\?i=\d+)" title=', indexed_source)
         if links:
-            redirects += map(lambda x: x.replace('thumb-350-',''), links)
+            for link in links:
+                image_page = urlopen_text('https://' + identifier + '/' + link)
+                image_urls = re.findall('<a href="(http[s]?://images\d?\.alphacoders\.com/\d+/\d+\.[jpeng]+)"', image_page)
+                redirects.append(image_urls[0])
             index += 1
         else:
             break
     return redirects
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
-direct_links = r'https://images.alphacoders.com/\d+/.*?\.jpg'
+direct_links = r'https://images\d?\.alphacoders\.com/\d+/\d+\.jpg'
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = True
