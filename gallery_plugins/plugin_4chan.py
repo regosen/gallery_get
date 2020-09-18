@@ -10,10 +10,16 @@ import re
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'<span class="subject">(.*?)</span>'
+def title(source):
+    title_str = re.findall(r'<span class="subject">(.*?)</span>', source)
+    if len(title_str) == 1:
+        return title_str[1]
+    else:
+        post_id = re.findall(r'<div class="thread" id="t([\d]+)"><div', source)
+        return 'Anonymous ' + post_id[0]
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
-# this can optionally return a hash of input paths to output filenames 
+# this can optionally return a hash of input paths to output filenames
 def redirect(source):
     matcher = re.compile(r'File: <a .+?href=\"(.*?\.4(?:cdn|chan).org/.*?)/([0-9]*)\.((?:jpg|jpeg|png|gif|webm))\"', re.I)
     links = matcher.findall(source)
