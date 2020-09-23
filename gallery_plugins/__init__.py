@@ -58,4 +58,4 @@ for file in os.listdir(directory):
             
         except ImportError:
             print("Gallery: failed to import")
-            print(f, ":", sys.exc_value)
+            print(f, ":", sys.exc_info()[1])
