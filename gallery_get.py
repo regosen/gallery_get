@@ -55,10 +55,13 @@ PARAMS = []
 
 
 def safe_str(name):
-    name = name.replace(":",";") # to preserve emoticons
-    name = "".join(i for i in name if ord(i)<128)
-    name = unescape(name)
-    return re.sub(r"[\/\\\*\?\"\<\>\|]", "", name).strip().rstrip(".")
+    if is_str(name):
+        name = name.replace(":",";") # to preserve emoticons
+        name = "".join(i for i in name if ord(i)<128)
+        name = unescape(name)
+        return re.sub(r"[\/\\\*\?\"\<\>\|]", "", name).strip().rstrip(".")
+    else:
+        return str(name)
 
 def safe_unpack(obj, default):
     if is_str(obj):
@@ -432,7 +435,7 @@ class GalleryGet(object):
             # Don't use urlopen_text here.  We want to capture when the data is in bytes, and treat as image
             data = urlopen_safe(self.url)
             time.sleep(self.plugin.page_load_time)
-            page = data.read().decode('utf-8')
+            page = unicode_safe(data.read())
         except Exception as error:
             if ("certificate verify failed" in str(error)):
                 print("ERROR: Python doesn't have SSL certificates installed, can't access " + self.url)
@@ -442,7 +445,7 @@ class GalleryGet(object):
                 # this could be a direct image
                 return download_image(self.url, self.folder)
             else:
-                print("Skipping inaccessible link (%d): %s" % (error.code, self.url))
+                print("Skipping inaccessible link (%s): %s" % (self.url, error))
                 return False
 
         ### BEGIN PROCESSING

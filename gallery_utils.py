@@ -42,10 +42,13 @@ def encode_safe(in_str):
 
 def unicode_safe(str):
     try:
-        str = str.decode("utf8")
+        return str.decode("utf8")
     except:
         pass
-    return str
+    try:
+        return str.decode("latin1")
+    except:
+        return str
 
 def urlopen_text(url, wait_time = 0):
     data = urlopen_safe(url)
@@ -54,7 +57,8 @@ def urlopen_text(url, wait_time = 0):
     return unicode_safe(data.read())
     
 def is_str(obj):
-    return isinstance(obj, str_type)
+    # isinstance doesn't always work here
+    return obj.__class__.__name__ == str_type.__name__
 
 def is_iterable(obj):
     return hasattr(obj, '__iter__') and not is_str(obj)
