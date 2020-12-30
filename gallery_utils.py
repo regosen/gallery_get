@@ -26,6 +26,27 @@ def urlopen_safe(url):
     q.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')
     return urlopen(q)
 
+JS_DRIVER = None
+def urlopen_js(url):
+    global JS_DRIVER
+    if not JS_DRIVER:
+        try:
+            from selenium import webdriver
+            from chromedriver_py import binary_path
+        except:
+            raise Exception("Page requires JavaScript, please run 'pip install selenium chromedriver-py' and try again")
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        JS_DRIVER = webdriver.Chrome(executable_path=binary_path, options=options)
+    JS_DRIVER.get(url)
+    wall_button = JS_DRIVER.find_elements_by_xpath("//div[@class='Wall-Button Button btn-wall--yes']")
+    if wall_button:
+        wall_button[0].click()
+    more_button = JS_DRIVER.find_elements_by_xpath("//button[@class='loadMore']")
+    if more_button:
+        more_button[0].click()
+    return JS_DRIVER.page_source
+
 def safe_makedirs(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)

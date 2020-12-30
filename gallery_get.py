@@ -433,9 +433,13 @@ class GalleryGet(object):
         ### TRY OPENING URL
         try:
             # Don't use urlopen_text here.  We want to capture when the data is in bytes, and treat as image
-            data = urlopen_safe(self.url)
-            time.sleep(self.plugin.page_load_time)
-            page = unicode_safe(data.read())
+            if self.plugin.needs_javascript:
+                source = urlopen_js(self.url)
+                page = unicode_safe(source)
+            else:
+                data = urlopen_safe(self.url)
+                time.sleep(self.plugin.page_load_time)
+                page = unicode_safe(data.read())
         except Exception as error:
             if ("certificate verify failed" in str(error)):
                 print("ERROR: Python doesn't have SSL certificates installed, can't access " + self.url)

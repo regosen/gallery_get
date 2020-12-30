@@ -8,30 +8,22 @@ import re
 # If you comment out a parameter, it will use the default defined in __init__.py
 
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
-identifier = "imgur.com/a/"
+identifier = "imgur.com/(a|gallery)/"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'property="og:title" content="(.*?)"'
+title = r'<div class="PostTitle">(.*?)</div>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
-def redirect(source):
-  if "post-loadall" in source:
-    # not all images are available on this page, redirect to grid version instead
-    regex = r'class="post-gridview-link"[^<>]+?href="(.+?)"'
-    return re.findall(regex, source, re.I)
-  else:
-    return None
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
 def direct_links(source):
-    matcher = re.compile(r'"images":\[(.+?)\]}',re.I)
+    matcher = re.compile(r'<img class="image-placeholder" src="(.+?)_d.+?">',re.I)
     sections = matcher.findall(source)
-    links = []
-    for section in sections:
-      array = eval("[" + section.replace("null",'""').replace("[","").replace("]","").replace("true","True").replace("false","False") + "]")
-      links += map(lambda x: "http://i.imgur.com/" + x["hash"] + ".jpg", array)
-    return links
+    return [section + ".jpg" for section in sections]
 
 # same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle). 
+
+# if true, this script will attempt to import selenium
+needs_javascript = True

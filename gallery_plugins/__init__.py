@@ -8,6 +8,7 @@ DEFAULT_TITLE = r'<title>(.*?)</title>'
 DEFAULT_REDIRECT = "" # assumes all links are direct links
 DEFAULT_DIRECT_LINKS = r'src=[\"\'](.+?\.jpe?g)[\"\']'
 DEFAULT_USE_FILENAME = False
+DEFAULT_LOAD_JAVASCRIPT = False
 DEFAULT_PAGE_LOAD_TIME = 0
 
 import os,sys
@@ -24,6 +25,7 @@ class Plugin(object):
         self.title = DEFAULT_TITLE
         self.use_filename = DEFAULT_USE_FILENAME
         self.page_load_time = DEFAULT_PAGE_LOAD_TIME
+        self.needs_javascript = DEFAULT_LOAD_JAVASCRIPT
 
 def register_plugin(mod, modname, debugname):
     mod_locals = dir(mod)
@@ -31,6 +33,7 @@ def register_plugin(mod, modname, debugname):
         mod.identifier = debugname
     if not modname in PLUGINS:
         PLUGINS[modname] = Plugin(debugname, mod.identifier)
+
     if 'title' in mod_locals:
         PLUGINS[modname].title = mod.title 
     if 'redirect' in mod_locals:
@@ -39,6 +42,8 @@ def register_plugin(mod, modname, debugname):
         PLUGINS[modname].direct = mod.direct_links 
     if 'same_filename' in mod_locals:
         PLUGINS[modname].use_filename = mod.same_filename 
+    if 'needs_javascript' in mod_locals:
+        PLUGINS[modname].needs_javascript = mod.needs_javascript 
     if 'page_load_time' in mod_locals:
         PLUGINS[modname].page_load_time = mod.page_load_time 
 
