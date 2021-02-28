@@ -2,11 +2,11 @@ import os, time
 
 # Python 3 imports that throw in Python 2
 try:
-    from urllib.request import Request, urlopen, URLError
+    from urllib.request import Request, urlopen, URLError, HTTPError
     from urllib.parse import urlparse, unquote
 except ImportError:
     # This is Python 2
-    from urllib2 import Request, urlopen, URLError
+    from urllib2 import Request, urlopen, URLError, HTTPError
     from urlparse import urlparse
     from urllib import unquote
 
@@ -21,10 +21,21 @@ except:
 
 
 # some galleries reject requests if they're not coming from a browser- this is to get past that.
-def urlopen_safe(url):
-    q = Request(url)
-    q.add_header('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36')
-    return urlopen(q)
+USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.192 Safari/537.36'
+
+def urlopen_safe(url, allow_redirect=True):
+    try:
+        req = Request(url)
+        req.add_header('User-Agent', USER_AGENT)
+        response = urlopen(req)
+    except HTTPError as e:
+        if allow_redirect and (e.code >= 300) and (e.code < 400):
+            # redirect wasn't handled by Request, do it ourselves
+            new_url = e.headers['Location']
+            return urlopen_safe(new_url, False)
+        else:
+            raise e
+    return response
 
 JS_DRIVER = None
 def urlopen_js(url):
@@ -79,7 +90,7 @@ def urlopen_text(url, wait_time = 0):
     
 def is_str(obj):
     # isinstance doesn't always work here
-    return obj.__class__.__name__ == str_type.__name__
+    return obj.__class__.__name__ in [str_type.__name__, 'str', 'unicode']
 
 def is_iterable(obj):
     return hasattr(obj, '__iter__') and not is_str(obj)
