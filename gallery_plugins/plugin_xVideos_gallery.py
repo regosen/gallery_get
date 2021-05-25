@@ -16,7 +16,7 @@ title = r'"title":"(.+?)"'
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
-direct_links = r'href="(https://img-hw.xvideos.com/videos/profiles/galleries/\S+?)"'
+direct_links = r'href="(https://img-hw.xvideos-cdn.com/videos/profiles/galleries/\S+?)"'
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
 same_filename = True
