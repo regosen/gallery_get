@@ -13,7 +13,7 @@ reddit_get grabs all imgur albums and pictures submitted by a given reddit user.
 
 Platforms, Python Versions:
 
-* OSX (Python 2.7.2 and 3.5.1)
+* macOS (Python 2.7.2 and 3.5.1)
 * Windows (Python 2.7.3 and 3.6.0)
 
 Gallery Plugins:
