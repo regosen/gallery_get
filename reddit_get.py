@@ -15,7 +15,6 @@ import os, time, sys, traceback
 import datetime, json
 
 from gallery_utils import *
-import gallery_plugins
 
 USER_QUERY = "https://www.reddit.com/user/%s/submitted/.json?limit=1000"
 DEST_ROOT = gallery_get.DEST_ROOT
@@ -23,9 +22,13 @@ safe_makedirs(DEST_ROOT)
 
 # To speed this up, don't craw links with pages that we know aren't galleries
 NON_GALLERY_DOMAINS = [
-"youtube.com",
-"youtu.be",
-"www.reddit.com"
+    "youtube.com",
+    "youtu.be",
+    "www.reddit.com"
+]
+
+GALLERY_PATH_EXCEPTIONS = [
+    "reddit.com/gallery/"
 ]
 
 def is_individual_imgur(url):
@@ -105,12 +108,11 @@ class RedditGet(object):
 
         if "data" in reddit_json:
             visited_links = set()
-            num_valid_posts = 0
             for post in reddit_json['data']['children']:
                 data = post['data']
                 url = data['url']
                 domain = urlparse(url).netloc.lower()
-                if any(x in domain for x in NON_GALLERY_DOMAINS):
+                if any(x in domain for x in NON_GALLERY_DOMAINS) and not any(x in url for x in GALLERY_PATH_EXCEPTIONS):
                     print("Skipping non-gallery link: " + url)
                     continue
                 elif url.lower() in visited_links:

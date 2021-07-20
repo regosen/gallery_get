@@ -28,6 +28,7 @@ Gallery Plugins:
 * imgbox
 * imgur (albums and galleries)
 * Pornhub (albums and single videos)
+* reddit
 * shimmie
 * vidble
 * xHamster
