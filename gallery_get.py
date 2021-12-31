@@ -53,7 +53,6 @@ EXCEPTION_NOTICE = """An exception occurred!  We can help if you follow these st
 (If you don't want to share the last line, the rest can still help.)"""
 PARAMS = []
 
-
 def safe_str(name):
     if is_str(name):
         name = name.replace(":",";") # to preserve emoticons
@@ -497,16 +496,21 @@ def safeCacheDestination(dest):
     except:
         open(DESTPATH_FILE,"w").write(dest.encode("utf8"))
 
-cur_file = os.path.basename(str(__file__))
-arg_file = sys.argv[0]
+def main():
+    global DEST_ROOT
+    def base_noext(path):
+        return os.path.splitext(os.path.basename(str(path)))[0] if path else ''
 
-if arg_file and os.path.basename(arg_file) == cur_file:
-    ### DIRECT LAUNCH (not import)
-    if len(sys.argv) > 1:
-        # use first parameter as url, second (if exists) as dest
-        if len(sys.argv) > 2:
+    if base_noext(__file__) == base_noext(sys.argv[0]):
+        ### DIRECT LAUNCH (not import)
+        if len(sys.argv) < 2:
+            run_prompted()
+        elif len(sys.argv) == 2:
+            run_wrapped(sys.argv[1], DEST_ROOT)
+        else:
             DEST_ROOT = unicode_safe(sys.argv[2])
             safeCacheDestination(DEST_ROOT)
-        run_wrapped(sys.argv[1], DEST_ROOT)
-    else:
-        run_prompted()
+            run_wrapped(sys.argv[1], DEST_ROOT)
+
+if __name__ == '__main__':
+    main()

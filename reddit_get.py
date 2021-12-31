@@ -156,15 +156,20 @@ def run(user="", dest=""):
     else:
         run_wrapped(user, dest)
 
-cur_file = os.path.basename(str(__file__))
-arg_file = sys.argv[0]
-if arg_file and os.path.basename(arg_file) == cur_file:
-    ### DIRECT LAUNCH (not import)
-    if len(sys.argv) > 1:
-        # use first parameter as reddit user, second (if exists) as dest
-        if len(sys.argv) > 2:
-            run_wrapped(sys.argv[1], sys.argv[2])
+def main():
+    global DEST_ROOT
+    def base_noext(path):
+        return os.path.splitext(os.path.basename(str(path)))[0] if path else ''
+
+    if base_noext(__file__) == base_noext(sys.argv[0]):
+        ### DIRECT LAUNCH (not import)
+        if len(sys.argv) < 2:
+            run_prompted()
+        elif len(sys.argv) == 2:
+            run_wrapped(sys.argv[1], DEST_ROOT)
         else:
-            run_wrapped(sys.argv[1])
-    else:
-        run_prompted()
+            DEST_ROOT = unicode_safe(sys.argv[2])
+            run_wrapped(sys.argv[1], DEST_ROOT)
+
+if __name__ == '__main__':
+    main()

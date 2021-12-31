@@ -5,7 +5,6 @@ last_gallery_dest.txt
 MANIFEST*
 README
 README.rst
-setup.py
 .DS_Store
 gallery_get_test_output.csv
 gallery_get.egg-info/*

@@ -19,6 +19,7 @@ Platforms, Python Versions:
 Gallery Plugins:
 
 * 4chan
+* alphacoders
 * eroshare
 * fuskator
 * gfycat
@@ -56,15 +57,15 @@ PyPI page is here: https://pypi.python.org/pypi/gallery_get
 ### From the Command Line
  
 ```
-$ python gallery_get.py
-$ python gallery_get.py [URL-OF-GALLERY]
-$ python gallery_get.py [URL-OF-GALLERY] [DEST]
+$ [python -m] gallery_get
+$ [python -m] gallery_get [URL-OF-GALLERY]
+$ [python -m] gallery_get [URL-OF-GALLERY] [DEST]
 ```
 
 ```
-$ python reddit_get.py
-$ python reddit_get.py [REDDIT-USERNAME]
-$ python reddit_get.py [REDDIT-USERNAME] [DEST]
+$ [python -m] reddit_get
+$ [python -m] reddit_get [REDDIT-USERNAME]
+$ [python -m] reddit_get [REDDIT-USERNAME] [DEST]
 ```
 
 If you call with no parameters, you'll be prompted for the gallery URL (for gallery_get) or reddit user (for reddit_get).  You will also be prompted for a destination directory, which it will remember as the default for next time.
@@ -73,14 +74,14 @@ If you skip [DEST] it will look for the contents of last_gallery_dest.txt, falli
 
 ### From the Python Environment
 
-```
+```python
 import gallery_get
 gallery_get.run()
 gallery_get.run(URL)
 gallery_get.run(URL, DESTINATION)
 ```
 
-```
+```python
 import reddit_get
 reddit_get.run()
 reddit_get.run(USER)
