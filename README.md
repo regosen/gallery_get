@@ -52,6 +52,13 @@ $ pip install gallery_get
 
 PyPI page is here: https://pypi.python.org/pypi/gallery_get
 
+### Requirements
+
+- Python 2.6+ or any version of Python 3
+- Python packages: [selenium](https://pypi.org/project/selenium/) and [chromedriver-py](https://pypi.org/project/chromedriver-py/)
+  - only needed for imgur albums
+  - automatically installed if you use `pip install`
+
 ## Usage
 
 ### From the Command Line

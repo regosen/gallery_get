@@ -9,10 +9,13 @@
 # more info here:
 # https://packaging.python.org/tutorials/packaging-projects/#uploading-your-project-to-pypi
 
+# NOTE: make sure you have the latest setuptools or the requirements may not get installed correctly.
+# python -m pip install --upgrade pip setuptools
+
 import setuptools
 
 setuptools.setup(name = 'gallery_get',
-    version = '1.9.1',
+    version = '1.9.2',
     author = 'Rego Sen',
     author_email = 'regosen@gmail.com',
     url = 'https://github.com/regosen/gallery_get',
@@ -24,9 +27,8 @@ setuptools.setup(name = 'gallery_get',
     packages = setuptools.find_packages(),
     include_package_data = True,
     install_requires = [
-        # chromedriver and selenium are only required for imgur albums for now
-        #'chromedriver-py',
-        #'selenium',
+        'chromedriver-py',
+        'selenium',
     ],
     classifiers = [
         'Development Status :: 4 - Beta',
