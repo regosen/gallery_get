@@ -17,9 +17,9 @@ title = r'"title":"(.*?)"'
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
-direct_links =r'href="(https://preview.redd.it/.+?)"'
+direct_links = r'href="(https://preview.redd.it/.+?)"'
 
 # same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle).
 
 # if true, this script will attempt to import selenium
-#needs_javascript = False
+# needs_javascript = False

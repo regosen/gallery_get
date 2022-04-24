@@ -16,7 +16,7 @@ from gallery_utils import *
 def redirect(source):
     redirects = []
     base_url = "http://shimmie.shishnet.org"
-    cur_url = re.findall(r'href="(.+?)"\>Random</a>', source)[0].rsplit("/",1)[0]
+    cur_url = re.findall(r'href="(.+?)"\>Random</a>', source)[0].rsplit("/", 1)[0]
     index = 0
     while True:
         indexed_page = "%s%s/%s" % (base_url, cur_url, index)

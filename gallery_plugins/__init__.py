@@ -11,7 +11,9 @@ DEFAULT_USE_FILENAME = False
 DEFAULT_LOAD_JAVASCRIPT = False
 DEFAULT_PAGE_LOAD_TIME = 0
 
-import os,sys
+import os
+import sys
+
 PLUGINS = {}
 DEFAULT_PLUGIN = None
 FALLBACK_TITLE = "Untitled Gallery"

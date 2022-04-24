@@ -20,7 +20,7 @@ title = r'"title":"(.*?)"'
 #   if the matches need to be reversed, use named groups "link" and "basename"
 
 # swap with the following to download "_lowres" versions instead
-#direct_links = r'"(https://v.eroshare.com/[a-zA-Z0-9]+_lowres.[a-zA-Z0-9]+)"'
+# direct_links = r'"(https://v.eroshare.com/[a-zA-Z0-9]+_lowres.[a-zA-Z0-9]+)"'
 direct_links = r'"(https://v.eroshare.com/[a-zA-Z0-9]+.[a-zA-Z0-9]+)"'
 
 

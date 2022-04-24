@@ -19,7 +19,7 @@ title = r'property="og:title" content="(.+?)"'
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 def direct_links(source):
-    links = re.findall(r'"videoUrl":"(\S+?)"',source)
+    links = re.findall(r'"videoUrl":"(\S+?)"', source)
     if links:
       return links[0].replace("\/", "/") # highest-quality video is listed first
     else:

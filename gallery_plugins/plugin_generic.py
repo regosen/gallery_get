@@ -17,7 +17,7 @@ redirect = r'href=["\']([^<]+?)["\'][^<]*?><img'
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 def direct_links(source):
-    matcher = re.compile(r'src=[\"\'](.+?\.jpe?g)[\"\']',re.I)
+    matcher = re.compile(r'src=[\"\'](.+?\.jpe?g)[\"\']', re.I)
     links = matcher.findall(source)
     links = filter(lambda x: not "thumb" in x.lower(), links) # exclude thumbnails
     return links

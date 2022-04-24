@@ -23,7 +23,7 @@ def redirect(source):
         indexed_page = cur_url + "&page=%d" % index
         print("Crawling " + indexed_page)
         indexed_source = urlopen_text(indexed_page)
-        links = re.findall('href=[\"\'](/photo/.+)[\"\']',indexed_source)
+        links = re.findall('href=[\"\'](/photo/.+)[\"\']', indexed_source)
         if links:
             redirects += map(lambda x: 'https://www.imagefaq.info' + x, links)
             index += 1

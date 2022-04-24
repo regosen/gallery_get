@@ -19,7 +19,7 @@ title = r'<div class="PostTitle">(.*?)</div>'
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
 def direct_links(source):
-    matcher = re.compile(r'<img class="image-placeholder" src="(.+?)_d.+?">',re.I)
+    matcher = re.compile(r'<img class="image-placeholder" src="(.+?)_d.+?">', re.I)
     sections = matcher.findall(source)
     return [section + ".jpg" for section in sections]
 
