@@ -32,9 +32,9 @@ class Plugin(object):
 
 def register_plugin(mod, modname, debugname):
     mod_locals = dir(mod)
-    if not 'identifier' in mod_locals:
+    if 'identifier' not in mod_locals:
         mod.identifier = debugname
-    if not modname in PLUGINS:
+    if modname not in PLUGINS:
         PLUGINS[modname] = Plugin(debugname, mod.identifier)
 
     if 'title' in mod_locals:

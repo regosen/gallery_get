@@ -34,7 +34,7 @@ def redirect(source):
 def direct_links(source):
     matcher = re.compile(r'src=[\"\'](.+?\.(?:jpg|jpeg|png|gif))[\"\']', re.I)
     links = matcher.findall(source)
-    return filter(lambda x: not "thumb" in x.lower(), links) # exclude thumbnails
+    return filter(lambda x: "thumb" not in x.lower(), links) # exclude thumbnails
 
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
