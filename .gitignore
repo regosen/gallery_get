@@ -8,3 +8,5 @@ README.rst
 .DS_Store
 gallery_get_test_output.csv
 gallery_get.egg-info/*
+venv/
+.idea/
