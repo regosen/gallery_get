@@ -24,4 +24,4 @@ title = r'"title":"(.*?)"'
 direct_links = r'"(https://v.eroshare.com/[a-zA-Z0-9]+.[a-zA-Z0-9]+)"'
 
 
-# same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle). 
+# same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle).

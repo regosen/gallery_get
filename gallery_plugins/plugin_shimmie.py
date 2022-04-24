@@ -37,5 +37,5 @@ def redirect(source):
 direct_links = r"name='ubb_full-img' value='\[img\](.+?)\[/img\]'"
 
 
-# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
+# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = True

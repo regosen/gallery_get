@@ -25,6 +25,6 @@ def direct_links(source):
     else:
       return None
 
-# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
+# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = False
 

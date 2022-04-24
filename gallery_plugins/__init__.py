@@ -35,17 +35,17 @@ def register_plugin(mod, modname, debugname):
         PLUGINS[modname] = Plugin(debugname, mod.identifier)
 
     if 'title' in mod_locals:
-        PLUGINS[modname].title = mod.title 
+        PLUGINS[modname].title = mod.title
     if 'redirect' in mod_locals:
-        PLUGINS[modname].redirect = mod.redirect 
+        PLUGINS[modname].redirect = mod.redirect
     if 'direct_links' in mod_locals:
-        PLUGINS[modname].direct = mod.direct_links 
+        PLUGINS[modname].direct = mod.direct_links
     if 'same_filename' in mod_locals:
-        PLUGINS[modname].use_filename = mod.same_filename 
+        PLUGINS[modname].use_filename = mod.same_filename
     if 'needs_javascript' in mod_locals:
-        PLUGINS[modname].needs_javascript = mod.needs_javascript 
+        PLUGINS[modname].needs_javascript = mod.needs_javascript
     if 'page_load_time' in mod_locals:
-        PLUGINS[modname].page_load_time = mod.page_load_time 
+        PLUGINS[modname].page_load_time = mod.page_load_time
 
 # import all python files starting with "plugin_"
 directory = os.path.abspath(os.path.dirname(__file__))
@@ -60,7 +60,7 @@ for file in os.listdir(directory):
             name = mod.__name__
             debugname = name[len(plugin_prefix):] # text after prefix
             register_plugin(mod, name, debugname)
-            
+
         except ImportError:
             print("Gallery: failed to import")
             print(f, ":", sys.exc_info()[1])

@@ -31,7 +31,7 @@ class GalleryTest(object):
     print("Testing " + debugname)
 
   def post_run(self, root, success, params):
-    
+
     if root:
       self.title = encode_safe(os.path.basename(root))
       for (dirpath, dirnames, filenames) in os.walk(root):

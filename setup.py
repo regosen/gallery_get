@@ -20,6 +20,7 @@ setuptools.setup(name = 'gallery_get',
     author_email = 'regosen@gmail.com',
     url = 'https://github.com/regosen/gallery_get',
     description = 'Gallery downloader - supports many galleries and reddit user histories',
+    # TODO: fix wrong file extension?
     long_description = open('README.rst', 'r').read(),
     long_description_content_type = 'text/markdown',
     license = 'MIT',

@@ -245,7 +245,7 @@ class ImgThread(threading.Thread):
 
     def copy_image(self, info):
         info.attempts += 1
-        
+
         file_name = info.destination_filename()
         try:
             file_info = urlopen_safe(info.path)
@@ -294,7 +294,7 @@ class ImgThread(threading.Thread):
                 ERRORS_ENCOUNTERED = True
                 print("Error encountered reading redirect page: " + info.redirect)
                 return
-                
+
             plugin = find_plugin(info.redirect) if (info.plugin.identifier == "generic") else info.plugin
             jpegs = run_match(plugin.direct,unicode_safe(source))
             if not jpegs:

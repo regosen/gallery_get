@@ -87,7 +87,7 @@ def urlopen_text(url, wait_time = 0):
     # some galleries need time to finish loading a page
     time.sleep(wait_time)
     return unicode_safe(data.read())
-    
+
 def is_str(obj):
     # isinstance doesn't always work here
     return obj.__class__.__name__ in [str_type.__name__, 'str', 'unicode']

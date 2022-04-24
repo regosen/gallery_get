@@ -34,5 +34,5 @@ def redirect(source):
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 direct_links = r'name="mainPhoto".+?(https?://x.imagefapusercontent.com/.+?\.(jpe?g?|png|gif))'
 
-# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index. 
+# same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = True

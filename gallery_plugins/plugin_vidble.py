@@ -24,4 +24,4 @@ def direct_links(source):
     links = filter(lambda x: "/assets/" not in x, links)
     return map(lambda x: 'http://vidble.com' + x, links)
 
-# same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle). 
+# same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle).

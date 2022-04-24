@@ -19,7 +19,7 @@ title = r'"title":"(.*?)"'
 #   if the matches need to be reversed, use named groups "link" and "basename"
 direct_links =r'href="(https://preview.redd.it/.+?)"'
 
-# same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle). 
+# same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle).
 
 # if true, this script will attempt to import selenium
 #needs_javascript = False
