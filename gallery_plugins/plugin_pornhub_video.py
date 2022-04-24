@@ -22,7 +22,7 @@ title = r'property="og:title" content="(.+?)"'
 def direct_links(source):
     links = re.findall(r'"videoUrl":"(\S+?)"', source)
     if links:
-      return links[0].replace("\/", "/") # highest-quality video is listed first
+      return links[0].replace("\/", "/")  # highest-quality video is listed first
 
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.

@@ -7,7 +7,7 @@ import os
 import sys
 
 DEFAULT_TITLE = r'<title>(.*?)</title>'
-DEFAULT_REDIRECT = "" # assumes all links are direct links
+DEFAULT_REDIRECT = ""  # assumes all links are direct links
 DEFAULT_DIRECT_LINKS = r'src=[\"\'](.+?\.jpe?g)[\"\']'
 DEFAULT_USE_FILENAME = False
 DEFAULT_LOAD_JAVASCRIPT = False
@@ -62,7 +62,7 @@ for file in os.listdir(directory):
         try:
             mod = __import__(f)
             name = mod.__name__
-            debugname = name[len(plugin_prefix):] # text after prefix
+            debugname = name[len(plugin_prefix):]  # text after prefix
             register_plugin(mod, name, debugname)
 
         except ImportError:
