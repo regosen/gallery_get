@@ -17,13 +17,12 @@ title = r'property="og:title" content="(.+?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
+
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 def direct_links(source):
     links = re.findall(r'"videoUrl":"(\S+?)"', source)
     if links:
       return links[0].replace("\/", "/") # highest-quality video is listed first
-    else:
-      return None
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = False

@@ -18,6 +18,7 @@ title = r'<title>(.+?)</title>'
 # this gallery takes an exceptionally long time.  Shortening it can lead to no links found.
 page_load_time = 8
 
+
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
     redirects = []

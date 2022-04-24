@@ -13,6 +13,7 @@ from gallery_utils import urlopen_text
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 title = r'<title>(.*) | xHamster</title>'
 
+
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
     redirects = re.findall(r'property="og:url" content="(\S+?)"', source)
@@ -27,6 +28,7 @@ def redirect(source):
         else:
           break
     return redirects
+
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 def direct_links(source):

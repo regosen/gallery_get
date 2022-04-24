@@ -2,7 +2,9 @@
 #
 # Rego Sen
 # Aug 22, 2013
-#
+
+import os
+import sys
 
 DEFAULT_TITLE = r'<title>(.*?)</title>'
 DEFAULT_REDIRECT = "" # assumes all links are direct links
@@ -11,12 +13,10 @@ DEFAULT_USE_FILENAME = False
 DEFAULT_LOAD_JAVASCRIPT = False
 DEFAULT_PAGE_LOAD_TIME = 0
 
-import os
-import sys
-
 PLUGINS = {}
 DEFAULT_PLUGIN = None
 FALLBACK_TITLE = "Untitled Gallery"
+
 
 class Plugin(object):
     def __init__(self, debugname, identifier):
@@ -28,6 +28,7 @@ class Plugin(object):
         self.use_filename = DEFAULT_USE_FILENAME
         self.page_load_time = DEFAULT_PAGE_LOAD_TIME
         self.needs_javascript = DEFAULT_LOAD_JAVASCRIPT
+
 
 def register_plugin(mod, modname, debugname):
     mod_locals = dir(mod)

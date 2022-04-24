@@ -15,6 +15,7 @@ title = r'<div class="PostTitle">(.*?)</div>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
+
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"

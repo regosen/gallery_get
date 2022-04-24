@@ -10,11 +10,13 @@ import sys
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
 identifier = 'fuskator.com'
 
+
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 def title(source):
     matcher = re.compile(r'<head><title>(.*?)</title>', re.DOTALL)
     gallery = matcher.findall(source)
     return gallery[0].strip()
+
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
@@ -26,8 +28,7 @@ def redirect(source):
     else:
         links = re.findall(r'<img class=\'full\' .*? src=\'\/\/(.*?)\' ondragstart=.*?\/>', source)
     links = map(lambda x: protocol + x, links)
-    links = set(links)  # Ensure we don't have any duplicates
-    return links
+    return set(links)  # Ensure we don't have any duplicates
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 direct_links = r'http[s]?:\/\/.*?\/large\/.*?\.jpg'

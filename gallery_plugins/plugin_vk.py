@@ -11,6 +11,7 @@ import re
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 
+
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
   redirects = re.findall(r'href="(/photo-.+?)"', source)
