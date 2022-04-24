@@ -34,6 +34,7 @@ def redirect(source):
           break
     return redirects
 
+
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 direct_links = r"name='ubb_full-img' value='\[img\](.+?)\[/img\]'"
 

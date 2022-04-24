@@ -30,6 +30,7 @@ def redirect(source):
     links = map(lambda x: protocol + x, links)
     return set(links)  # Ensure we don't have any duplicates
 
+
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 direct_links = r'http[s]?:\/\/.*?\/large\/.*?\.jpg'
 

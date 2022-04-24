@@ -17,6 +17,7 @@ def redirect(source):
   redirects = re.findall(r'href="(/photo-.+?)"', source)
   return ["https://vk.com" + x for x in redirects]
 
+
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 direct_links = r'src="(.+?)" class="ph_img"'
 

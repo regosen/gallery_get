@@ -50,6 +50,7 @@ def register_plugin(mod, modname, debugname):
     if 'page_load_time' in mod_locals:
         PLUGINS[modname].page_load_time = mod.page_load_time
 
+
 # import all python files starting with "plugin_"
 directory = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, directory)

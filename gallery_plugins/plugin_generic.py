@@ -22,5 +22,6 @@ def direct_links(source):
     links = matcher.findall(source)
     return filter(lambda x: not "thumb" in x.lower(), links) # exclude thumbnails
 
+
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = True
