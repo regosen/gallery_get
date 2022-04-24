@@ -1,5 +1,4 @@
 # Plugin for gallery_get.
-import re
 
 # Each definition can be one of the following:
 # - a string to match

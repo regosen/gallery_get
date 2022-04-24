@@ -1,8 +1,6 @@
 # NOTE: For xVideos use the direct link, which should look something like this: "http://www.xvideos.com/video123456/blah_blah_blah"
 
-
 # Plugin for gallery_get.
-import re
 
 # Each definition can be one of the following:
 # - a string

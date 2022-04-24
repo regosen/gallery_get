@@ -1,6 +1,6 @@
 # Plugin for gallery_get.
 import re
-import sys
+
 # Each definition can be one of the following:
 # - a string
 # - a regex string
