@@ -6,7 +6,7 @@
 import os
 import sys
 
-DEFAULT_TITLE = r'<title>(.*?)</title>'
+DEFAULT_TITLE = '<title>(.*?)</title>'
 DEFAULT_REDIRECT = ""  # assumes all links are direct links
 DEFAULT_DIRECT_LINKS = r'src=[\"\'](.+?\.jpe?g)[\"\']'
 DEFAULT_USE_FILENAME = False

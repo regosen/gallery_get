@@ -21,4 +21,3 @@ direct_links = r"setVideoUrlHigh\('(\S+?)'"
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = False
-

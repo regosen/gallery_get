@@ -1,4 +1,5 @@
-# Plugin for gallery_get.
+"""Plugin for gallery_get."""
+
 import re
 
 # Each definition can be one of the following:
@@ -12,11 +13,11 @@ import re
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 def title(source):
-    post_subject = re.findall(r' <span class="subject">(.*?)</span> ', source)
+    post_subject = re.findall(' <span class="subject">(.*?)</span> ', source)
     if len(post_subject[0]) > 0:
         title_str = post_subject[0]
     else:
-        post_title = re.findall(r'<title>(.*?)</title>', source)
+        post_title = re.findall('<title>(.*?)</title>', source)
         title_str = post_title[0].split(' - ')[1]
     return title_str
 

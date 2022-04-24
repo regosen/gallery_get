@@ -13,7 +13,7 @@ identifier = 'fuskator.com'
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
 def title(source):
-    matcher = re.compile(r'<head><title>(.*?)</title>', re.DOTALL)
+    matcher = re.compile('<head><title>(.*?)</title>', re.DOTALL)
     gallery = matcher.findall(source)
     return gallery[0].strip()
 

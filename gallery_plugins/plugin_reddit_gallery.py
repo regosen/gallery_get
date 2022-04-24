@@ -10,14 +10,14 @@
 identifier = "reddit.com/gallery/"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'"title":"(.*?)"'
+title = '"title":"(.*?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
-direct_links = r'href="(https://preview.redd.it/.+?)"'
+direct_links = 'href="(https://preview.redd.it/.+?)"'
 
 # same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle).
 

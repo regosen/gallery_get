@@ -12,7 +12,7 @@ from gallery_utils import *
 identifier = "pornhub.com/album/"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'<title>(.+?)</title>'
+title = '<title>(.+?)</title>'
 
 # some galleries take time to load before their source can be read
 # this gallery takes an exceptionally long time.  Shortening it can lead to no links found.
@@ -22,7 +22,7 @@ page_load_time = 8
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 def redirect(source):
     redirects = []
-    url_match = re.findall(r'link rel="canonical" href="(.+?)"', source)
+    url_match = re.findall('link rel="canonical" href="(.+?)"', source)
     if url_match:
         cur_url = url_match[0].split("?")[0]
         index = 1
@@ -44,4 +44,3 @@ direct_links = r'image\:src" content="(\S+?)"'
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = False
-

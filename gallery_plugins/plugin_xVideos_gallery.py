@@ -10,7 +10,7 @@
 identifier = "xvideos.com/.+/photos/"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'"title":"(.+?)"'
+title = '"title":"(.+?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 

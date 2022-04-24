@@ -9,7 +9,7 @@
 # identifier (default = name of this plugin after "plugin_") : If there's a match, we'll attempt to download images using this plugin.
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'Reload this Page">(.+?)</a>'
+title = 'Reload this Page">(.+?)</a>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 redirect = r'(http://img\d\d\d\.imagevenue\.com/img\.php.+?\.jpe?g)'

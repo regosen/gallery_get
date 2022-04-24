@@ -10,7 +10,7 @@
 identifier = "eroshare.com"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'"title":"(.*?)"'
+title = '"title":"(.*?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
@@ -20,7 +20,7 @@ title = r'"title":"(.*?)"'
 
 # swap with the following to download "_lowres" versions instead
 # direct_links = r'"(https://v.eroshare.com/[a-zA-Z0-9]+_lowres.[a-zA-Z0-9]+)"'
-direct_links = r'"(https://v.eroshare.com/[a-zA-Z0-9]+.[a-zA-Z0-9]+)"'
+direct_links = '"(https://v.eroshare.com/[a-zA-Z0-9]+.[a-zA-Z0-9]+)"'
 
 
 # same_filename (default=False): if True, uses same filename from remote link.  Otherwise, creates own filename with incremental index (or uses subtitle).

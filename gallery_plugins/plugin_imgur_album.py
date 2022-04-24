@@ -11,7 +11,7 @@ import re
 identifier = "imgur.com/(a|gallery)/"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'<div class="PostTitle">(.*?)</div>'
+title = '<div class="PostTitle">(.*?)</div>'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
@@ -20,7 +20,7 @@ title = r'<div class="PostTitle">(.*?)</div>'
 # * if using regex, you can have two matches: the first will be the link and the second will be the basename of the file.
 #   if the matches need to be reversed, use named groups "link" and "basename"
 def direct_links(source):
-    matcher = re.compile(r'<img class="image-placeholder" src="(.+?)_d.+?">', re.I)
+    matcher = re.compile('<img class="image-placeholder" src="(.+?)_d.+?">', re.I)
     sections = matcher.findall(source)
     return [section + ".jpg" for section in sections]
 

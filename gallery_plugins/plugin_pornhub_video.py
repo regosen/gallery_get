@@ -13,7 +13,7 @@ import re
 identifier = "pornhub.com/view_video"
 
 # title: parses the gallery page for a title.  This will be the folder name of the output gallery.
-title = r'property="og:title" content="(.+?)"'
+title = 'property="og:title" content="(.+?)"'
 
 # redirect: if the links in the gallery page go to an html instead of an image, use this to parse the gallery page.
 
@@ -27,4 +27,3 @@ def direct_links(source):
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = False
-
