@@ -34,7 +34,13 @@ def redirect(source):
     return redirects
 
 # direct_links: if redirect is non-empty, this parses each redirect page for a single image.  Otherwise, this parses the gallery page for all images.
-direct_links = r'name=\"mainPhoto\".*?(https?://.*?\.imagefap.*?\.com/.*?\.(jpe?g?|png|jfif|gif).*?)\"'
+def direct_links(source):
+    id = re.search(r'id="imageid_input" value="(\d+)"', source)
+    if not id:
+        return []
+    expression = r'(https://cdnc?.imagefap.com/images/full/.+?/' + id.group(1) + r'.jpg.+?)\"'
+    match = re.search(expression, source)
+    return [match.group(1)] if match else []
 
 # same_filename (default=False): if True, uses filename specified on remote link.  Otherwise, creates own filename with incremental index.
 same_filename = True

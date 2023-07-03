@@ -15,12 +15,12 @@
 import setuptools
 
 setuptools.setup(name = 'gallery_get',
-    version = '1.9.2',
+    version = '1.9.4',
     author = 'Rego Sen',
     author_email = 'regosen@gmail.com',
     url = 'https://github.com/regosen/gallery_get',
     description = 'Gallery downloader - supports many galleries and reddit user histories',
-    long_description = open('README.rst', 'r').read(),
+    long_description = open('README.md', 'r').read(),
     long_description_content_type = 'text/markdown',
     license = 'MIT',
     keywords = 'gallery downloader reddit imgur imgbox 4chan xhamster eroshare vidble pornhub xvideos imagebam alphacoders',
